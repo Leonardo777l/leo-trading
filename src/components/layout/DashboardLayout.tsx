@@ -6,6 +6,8 @@ import { motion } from 'framer-motion';
 
 import { SidebarNav } from './SidebarNav';
 import { useTradeStore } from '@/store/useTradeStore';
+import { LoginPage } from '@/components/auth/LoginPage';
+import { supabase } from '@/lib/supabase';
 
 interface DashboardLayoutProps {
     children: ReactNode;
@@ -15,12 +17,31 @@ interface DashboardLayoutProps {
 }
 
 export const DashboardLayout = ({ children, leftSidebar, rightSidebar, onQuickAdd }: DashboardLayoutProps) => {
-    const fetchTrades = useTradeStore(state => state.fetchTrades);
+    const { user, setUser, fetchTrades } = useTradeStore();
 
     useEffect(() => {
-        // Fetch trades from Supabase on mount
-        fetchTrades();
-    }, [fetchTrades]);
+        // Handle session on mount
+        supabase.auth.getSession().then(({ data: { session } }) => {
+            if (session?.user) {
+                setUser(session.user);
+                fetchTrades();
+            }
+        });
+
+        // Listen for auth changes
+        const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
+            setUser(session?.user ?? null);
+            if (session?.user) {
+                fetchTrades();
+            }
+        });
+
+        return () => subscription.unsubscribe();
+    }, [setUser, fetchTrades]);
+
+    if (!user) {
+        return <LoginPage />;
+    }
 
     return (
         <div className="min-h-screen bg-black text-foreground font-sans overflow-hidden selection:bg-target/30 relative">

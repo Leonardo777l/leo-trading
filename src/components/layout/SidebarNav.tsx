@@ -1,11 +1,11 @@
-'use client';
-
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
-import { LayoutDashboard, ListTree, Wallet } from 'lucide-react';
+import { LayoutDashboard, ListTree, Wallet, LogOut } from 'lucide-react';
+import { useTradeStore } from '@/store/useTradeStore';
 
 export const SidebarNav = () => {
     const pathname = usePathname();
+    const { user, signOut } = useTradeStore();
 
     const links = [
         { href: '/', icon: LayoutDashboard, label: 'Dashboard' },
@@ -30,13 +30,37 @@ export const SidebarNav = () => {
                     >
                         <Icon className={`w-5 h-5 ${isActive ? 'stroke-[2.5]' : ''}`} />
 
-                        {/* Tooltip for desktop */}
                         <div className="absolute left-16 px-3 py-1.5 bg-gunmetal-800 text-white text-xs font-bold rounded opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all whitespace-nowrap z-[100] md:block hidden shadow-xl border border-gunmetal-700">
                             {link.label}
                         </div>
                     </Link>
                 );
             })}
+
+            <div className="md:mt-auto flex md:flex-col items-center gap-4">
+                {user?.user_metadata?.avatar_url && (
+                    <img 
+                        src={user.user_metadata.avatar_url} 
+                        alt="Profile" 
+                        className="w-8 h-8 rounded-full border border-gunmetal-700" 
+                    />
+                )}
+                
+                <button
+                    onClick={() => {
+                        if (window.confirm('¿Quieres cerrar sesión?')) {
+                            signOut();
+                        }
+                    }}
+                    className="group relative flex items-center justify-center w-12 h-12 rounded-full text-gray-500 hover:text-stop hover:bg-stop/10 transition-all duration-300"
+                    aria-label="Cerrar sesión"
+                >
+                    <LogOut className="w-5 h-5" />
+                    <div className="absolute left-16 px-3 py-1.5 bg-gunmetal-800 text-white text-xs font-bold rounded opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all whitespace-nowrap z-[100] md:block hidden shadow-xl border border-gunmetal-700">
+                        Cerrar Sesión
+                    </div>
+                </button>
+            </div>
         </nav>
     );
 };

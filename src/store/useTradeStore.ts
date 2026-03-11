@@ -1,4 +1,6 @@
 import { create } from 'zustand';
+import { supabase } from '@/lib/supabase';
+import { User } from '@supabase/supabase-js';
 
 export type Direction = 'Long' | 'Short';
 export type Outcome = 'TP' | 'SL' | 'BE';
@@ -19,18 +21,21 @@ export interface Trade {
     instrument?: string; // e.g. 'NQ', 'MNQ', 'ES'
     notes?: string; // Custom trade notes/context
     netProfitOverride?: number; // Raw PnL fallback for prop firm statements
+    user_id?: string;
 }
-
-import { supabase } from '@/lib/supabase';
 
 interface TradeState {
     trades: Trade[];
+    user: User | null;
     isLoading: boolean;
     fetchTrades: () => Promise<void>;
     addTrade: (trade: Omit<Trade, 'id' | 'netProfit'>) => Promise<void>;
     bulkAddTrades: (trades: Omit<Trade, 'id' | 'netProfit'>[]) => Promise<void>;
     removeTrade: (id: string) => Promise<void>;
     clearTrades: () => Promise<void>;
+    signInWithGoogle: () => Promise<void>;
+    signOut: () => Promise<void>;
+    setUser: (user: User | null) => void;
 }
 
 const calculateNetProfit = (outcome: Outcome, ticks: number, stop: number, contracts: number, instrument?: string) => {
@@ -80,12 +85,21 @@ const calculateNetProfit = (outcome: Outcome, ticks: number, stop: number, contr
     return gross - totalCommissions;
 };
 
-export const useTradeStore = create<TradeState>((set) => ({
+export const useTradeStore = create<TradeState>((set, get) => ({
     trades: [],
+    user: null,
     isLoading: false,
     fetchTrades: async () => {
+        const { user } = get();
+        if (!user) return;
+
         set({ isLoading: true });
-        const { data, error } = await supabase.from('trades').select('*').order('date', { ascending: true });
+        const { data, error } = await supabase
+            .from('trades')
+            .select('*')
+            .eq('user_id', user.id)
+            .order('date', { ascending: true });
+            
         if (!error && data) {
             set({ trades: data as Trade[] });
         } else {
@@ -94,6 +108,9 @@ export const useTradeStore = create<TradeState>((set) => ({
         set({ isLoading: false });
     },
     addTrade: async (tradeInput) => {
+        const { user } = get();
+        if (!user) return;
+
         const netProfit = tradeInput.netProfitOverride !== undefined 
             ? Number(tradeInput.netProfitOverride) 
             : calculateNetProfit(tradeInput.outcome, tradeInput.ticksTarget, tradeInput.stopTicks, tradeInput.contracts, tradeInput.instrument);
@@ -101,10 +118,10 @@ export const useTradeStore = create<TradeState>((set) => ({
         const newTrade = {
             ...tradeInput,
             account: tradeInput.account?.trim().toUpperCase() || 'PERSONAL',
-            netProfit
+            netProfit,
+            user_id: user.id
         };
 
-        // Allow UI to update optimistically or wait for DB. Waiting guarantees sync.
         const { data, error } = await supabase.from('trades').insert([newTrade]).select().single();
         if (!error && data) {
             set((state) => ({ trades: [...state.trades, data as Trade] }));
@@ -113,12 +130,16 @@ export const useTradeStore = create<TradeState>((set) => ({
         }
     },
     bulkAddTrades: async (tradesInput) => {
+        const { user } = get();
+        if (!user) return;
+
         const newTrades = tradesInput.map(t => ({
             ...t,
             account: t.account?.trim().toUpperCase() || 'PERSONAL',
             netProfit: t.netProfitOverride !== undefined 
                 ? Number(t.netProfitOverride) 
-                : calculateNetProfit(t.outcome, t.ticksTarget, t.stopTicks, t.contracts, t.instrument)
+                : calculateNetProfit(t.outcome, t.ticksTarget, t.stopTicks, t.contracts, t.instrument),
+            user_id: user.id
         }));
 
         const { data, error } = await supabase.from('trades').insert(newTrades).select();
@@ -129,18 +150,37 @@ export const useTradeStore = create<TradeState>((set) => ({
         }
     },
     removeTrade: async (id) => {
-        const { error } = await supabase.from('trades').delete().eq('id', id);
+        const { user } = get();
+        if (!user) return;
+
+        const { error } = await supabase.from('trades').delete().eq('id', id).eq('user_id', user.id);
         if (!error) {
             set((state) => ({ trades: state.trades.filter(t => t.id !== id) }));
         }
     },
     clearTrades: async () => {
-        // Technically this might fail if we don't have permission to delete all, but the RLS allows true for deletes
-        const { error } = await supabase.from('trades').delete().neq('id', '00000000-0000-0000-0000-000000000000');
+        const { user } = get();
+        if (!user) return;
+
+        const { error } = await supabase.from('trades').delete().eq('user_id', user.id);
         if (!error) {
             set({ trades: [] });
         }
     },
+    signInWithGoogle: async () => {
+        const { error } = await supabase.auth.signInWithOAuth({
+            provider: 'google',
+            options: {
+                redirectTo: typeof window !== 'undefined' ? window.location.origin : '',
+            }
+        });
+        if (error) console.error('Error signing in:', error.message);
+    },
+    signOut: async () => {
+        await supabase.auth.signOut();
+        set({ user: null, trades: [] });
+    },
+    setUser: (user) => set({ user }),
 }));
 
 export const getTradeStats = (trades: Trade[]) => {
