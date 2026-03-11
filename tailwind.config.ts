@@ -11,6 +11,17 @@ const config: Config = {
       colors: {
         background: "var(--background)",
         foreground: "var(--foreground)",
+        oled: "#000000",
+        gunmetal: {
+          900: "var(--gunmetal-900)",
+          800: "var(--gunmetal-800)",
+          700: "var(--gunmetal-700)",
+        },
+        target: "#00C805",
+        stop: "#FF0032",
+        breakeven: "#FFBF00",
+        glass: "rgba(255, 255, 255, 0.03)",
+        glassBorder: "rgba(255, 255, 255, 0.08)",
       },
     },
   },
