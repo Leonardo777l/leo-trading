@@ -5,6 +5,7 @@ import { Plus } from 'lucide-react';
 import { motion } from 'framer-motion';
 
 import { SidebarNav } from './SidebarNav';
+import { useTradeStore } from '@/store/useTradeStore';
 
 interface DashboardLayoutProps {
     children: ReactNode;
@@ -14,16 +15,12 @@ interface DashboardLayoutProps {
 }
 
 export const DashboardLayout = ({ children, leftSidebar, rightSidebar, onQuickAdd }: DashboardLayoutProps) => {
+    const fetchTrades = useTradeStore(state => state.fetchTrades);
+
     useEffect(() => {
-        if (typeof window !== 'undefined') {
-            const hasWiped = window.localStorage.getItem('force-wipe-v1');
-            if (!hasWiped) {
-                window.localStorage.removeItem('leo-trading-storage');
-                window.localStorage.setItem('force-wipe-v1', 'true');
-                window.location.reload();
-            }
-        }
-    }, []);
+        // Fetch trades from Supabase on mount
+        fetchTrades();
+    }, [fetchTrades]);
 
     return (
         <div className="min-h-screen bg-black text-foreground font-sans overflow-hidden selection:bg-target/30 relative">

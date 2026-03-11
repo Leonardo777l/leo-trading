@@ -22,12 +22,16 @@ export interface Trade {
     netProfitOverride?: number; // Raw PnL fallback for prop firm statements
 }
 
+import { supabase } from '@/lib/supabase';
+
 interface TradeState {
     trades: Trade[];
-    addTrade: (trade: Omit<Trade, 'id' | 'netProfit'>) => void;
-    bulkAddTrades: (trades: Omit<Trade, 'id' | 'netProfit'>[]) => void;
-    removeTrade: (id: string) => void;
-    clearTrades: () => void;
+    isLoading: boolean;
+    fetchTrades: () => Promise<void>;
+    addTrade: (trade: Omit<Trade, 'id' | 'netProfit'>) => Promise<void>;
+    bulkAddTrades: (trades: Omit<Trade, 'id' | 'netProfit'>[]) => Promise<void>;
+    removeTrade: (id: string) => Promise<void>;
+    clearTrades: () => Promise<void>;
 }
 
 const calculateNetProfit = (outcome: Outcome, ticks: number, stop: number, contracts: number, instrument?: string) => {
@@ -36,9 +40,6 @@ const calculateNetProfit = (outcome: Outcome, ticks: number, stop: number, contr
 
     switch (instrument?.toUpperCase()) {
         case 'NQ':
-            // NQ is $20 per point (4 ticks of $5).
-            // If users input large numbers like "500", they often mean $500 PNL or 50.0 points.
-            // Let's stick to standard tick value but add a safeguard: if ticks > 100, they might be using points * 10 or raw $ value.
             tickValue = 5.00;
             commissionPerContract = 4.10;
             break;
@@ -62,22 +63,12 @@ const calculateNetProfit = (outcome: Outcome, ticks: number, stop: number, contr
             break;
     }
 
-    // Safety check: if user inputs 500 "ticks" for NQ, they likely mean $500, not 500 * $5 = $2500 per contract.
-    // Prop firm dashboard standard: if ticks value is extraordinarily high (e.g., > 100), it's often a raw dollar amount input by mistake.
-    // However, to keep it mathematically pure to the user's input:
-    let gross = 0;
-    
-    // If "ticks" is clearly a dollar amount (e.g. 574 on a 2 contract trade usually means $574 total, not 574 ticks * $5 * 2 = $5740)
-    // We will assume if it's over 100 on NQ, it's actually representing the raw PnL divided by contracts, or just raw PnL.
-    // Let's use a simpler heuristic: If it's a direct P&L override use it, otherwise calculate strictly.
-    // Wait, let's look at the CSV: "574" TP on 2 contracts, outcome is "TP".
-    // If standard NQ: 574 ticks = 143.5 points = $2,870 per contract = $5,740 total. Which matches the screenshot ($5708.13 avg win).
-    // The user's CSV simply has huge numbers for "Ticks" and "Stop". They probably track "Dollars" in those columns!
-    // To fix this globally without breaking manual entry: if ticksTarget >= 100 and it's NQ/ES, they are likely entering Dollars.
     const isDollarInput = (ticks > 150 || stop > 150);
     const effectiveTickValue = isDollarInput ? 1 : tickValue;
-    const effectiveContracts = isDollarInput ? 1 : contracts; // If it's pure dollars, don't multiply by contracts again usually
+    const effectiveContracts = isDollarInput ? 1 : contracts; 
 
+    let gross = 0;
+    
     if (outcome === 'TP') {
         gross = ticks * effectiveTickValue * effectiveContracts;
     } else if (outcome === 'SL') {
@@ -90,36 +81,68 @@ const calculateNetProfit = (outcome: Outcome, ticks: number, stop: number, contr
     return gross - totalCommissions;
 };
 
-export const useTradeStore = create<TradeState>()(
-    persist(
-        (set) => ({
-            trades: [],
-            addTrade: (tradeInput) => set((state) => {
-                const newTrade: Trade = {
-                    ...tradeInput,
-                    account: tradeInput.account?.trim().toUpperCase() || 'PERSONAL',
-                    id: crypto.randomUUID(),
-                    netProfit: tradeInput.netProfitOverride !== undefined ? Number(tradeInput.netProfitOverride) : calculateNetProfit(tradeInput.outcome, tradeInput.ticksTarget, tradeInput.stopTicks, tradeInput.contracts, tradeInput.instrument)
-                };
-                return { trades: [...state.trades, newTrade] };
-            }),
-            bulkAddTrades: (tradesInput) => set((state) => {
-                const newTrades = tradesInput.map(t => ({
-                    ...t,
-                    account: t.account?.trim().toUpperCase() || 'PERSONAL',
-                    id: crypto.randomUUID(),
-                    netProfit: t.netProfitOverride !== undefined ? Number(t.netProfitOverride) : calculateNetProfit(t.outcome, t.ticksTarget, t.stopTicks, t.contracts, t.instrument)
-                }));
-                return { trades: [...state.trades, ...newTrades] };
-            }),
-            removeTrade: (id) => set((state) => ({ trades: state.trades.filter(t => t.id !== id) })),
-            clearTrades: () => set({ trades: [] }),
-        }),
-        {
-            name: 'leo-trading-storage',
+export const useTradeStore = create<TradeState>((set, get) => ({
+    trades: [],
+    isLoading: false,
+    fetchTrades: async () => {
+        set({ isLoading: true });
+        const { data, error } = await supabase.from('trades').select('*').order('date', { ascending: true });
+        if (!error && data) {
+            set({ trades: data as Trade[] });
+        } else {
+            console.error('Failed to fetch trades:', error);
         }
-    )
-);
+        set({ isLoading: false });
+    },
+    addTrade: async (tradeInput) => {
+        const netProfit = tradeInput.netProfitOverride !== undefined 
+            ? Number(tradeInput.netProfitOverride) 
+            : calculateNetProfit(tradeInput.outcome, tradeInput.ticksTarget, tradeInput.stopTicks, tradeInput.contracts, tradeInput.instrument);
+            
+        const newTrade = {
+            ...tradeInput,
+            account: tradeInput.account?.trim().toUpperCase() || 'PERSONAL',
+            netProfit
+        };
+
+        // Allow UI to update optimistically or wait for DB. Waiting guarantees sync.
+        const { data, error } = await supabase.from('trades').insert([newTrade]).select().single();
+        if (!error && data) {
+            set((state) => ({ trades: [...state.trades, data as Trade] }));
+        } else {
+            console.error('Failed to add trade:', error);
+        }
+    },
+    bulkAddTrades: async (tradesInput) => {
+        const newTrades = tradesInput.map(t => ({
+            ...t,
+            account: t.account?.trim().toUpperCase() || 'PERSONAL',
+            netProfit: t.netProfitOverride !== undefined 
+                ? Number(t.netProfitOverride) 
+                : calculateNetProfit(t.outcome, t.ticksTarget, t.stopTicks, t.contracts, t.instrument)
+        }));
+
+        const { data, error } = await supabase.from('trades').insert(newTrades).select();
+        if (!error && data) {
+            set((state) => ({ trades: [...state.trades, ...(data as Trade[])] }));
+        } else {
+            console.error('Failed to bulk add trades:', error);
+        }
+    },
+    removeTrade: async (id) => {
+        const { error } = await supabase.from('trades').delete().eq('id', id);
+        if (!error) {
+            set((state) => ({ trades: state.trades.filter(t => t.id !== id) }));
+        }
+    },
+    clearTrades: async () => {
+        // Technically this might fail if we don't have permission to delete all, but the RLS allows true for deletes
+        const { error } = await supabase.from('trades').delete().neq('id', '00000000-0000-0000-0000-000000000000');
+        if (!error) {
+            set({ trades: [] });
+        }
+    },
+}));
 
 export const getTradeStats = (trades: Trade[]) => {
     if (trades.length === 0) return {

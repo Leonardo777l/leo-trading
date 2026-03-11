@@ -12,6 +12,7 @@ export const CsvUploader = () => {
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const [parsedData, setParsedData] = useState<any[] | null>(null);
     const [mappedTrades, setMappedTrades] = useState<Omit<Trade, 'id' | 'netProfit'>[]>([]);
+    const [isImporting, setIsImporting] = useState(false);
     const inputRef = useRef<HTMLInputElement>(null);
     const bulkAddTrades = useTradeStore(state => state.bulkAddTrades);
     const clearTrades = useTradeStore(state => state.clearTrades);
@@ -203,12 +204,14 @@ export const CsvUploader = () => {
         setMappedTrades(newMappedItems);
     };
 
-    const handleConfirm = () => {
+    const handleConfirm = async () => {
         if (mappedTrades.length > 0) {
-            bulkAddTrades(mappedTrades);
+            setIsImporting(true);
+            await bulkAddTrades(mappedTrades);
             setParsedData(null);
             setMappedTrades([]);
             if (inputRef.current) inputRef.current.value = '';
+            setIsImporting(false);
         }
     };
 
@@ -277,10 +280,11 @@ export const CsvUploader = () => {
                             </div>
                             <button
                                 onClick={handleConfirm}
-                                className="flex items-center justify-center gap-2 bg-target text-black px-4 py-2 rounded-lg font-bold hover:shadow-[0_0_15px_rgba(0,200,5,0.3)] hover:scale-105 transition-all"
+                                disabled={isImporting}
+                                className={`flex items-center justify-center gap-2 px-4 py-2 rounded-lg font-bold transition-all ${isImporting ? 'bg-gunmetal-700 text-gray-500 cursor-not-allowed' : 'bg-target text-black hover:shadow-[0_0_15px_rgba(0,200,5,0.3)] hover:scale-105'}`}
                             >
-                                <Save className="w-4 h-4" />
-                                Import All
+                                <Save className={`w-4 h-4 ${isImporting ? 'animate-spin' : ''}`} />
+                                {isImporting ? 'Importing...' : 'Import All'}
                             </button>
                         </div>
                         <div className="overflow-x-auto max-h-[300px] custom-scrollbar">

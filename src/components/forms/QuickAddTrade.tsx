@@ -28,6 +28,7 @@ export const QuickAddTrade = ({ isOpen, onClose }: QuickAddTradeProps) => {
     const [instrument, setInstrument] = useState('NQ');
     const [notes, setNotes] = useState('');
     const [isNewAccount, setIsNewAccount] = useState(false);
+    const [isSubmitting, setIsSubmitting] = useState(false);
 
     const activeAccounts = useMemo(() => {
         const accounts = trades.map(t => t.account ? t.account.trim().toUpperCase() : 'PERSONAL');
@@ -35,14 +36,15 @@ export const QuickAddTrade = ({ isOpen, onClose }: QuickAddTradeProps) => {
         return uniqueAccounts.length > 0 ? uniqueAccounts.sort() : ['PERSONAL'];
     }, [trades]);
 
-    const handleSubmit = (e: React.FormEvent) => {
+    const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
+        setIsSubmitting(true);
 
         // Force local midday to prevent UTC midnight timezone shift bugs
         // e.g. "2026-03-11" -> "2026-03-11T12:00:00"
         const safeDate = date.includes('T') ? date : `${date}T12:00:00`;
 
-        addTrade({
+        await addTrade({
             date: new Date(safeDate).toISOString(),
             direction,
             outcome,
@@ -55,6 +57,8 @@ export const QuickAddTrade = ({ isOpen, onClose }: QuickAddTradeProps) => {
             instrument,
             notes
         });
+        
+        setIsSubmitting(false);
         onClose();
     };
 
@@ -276,9 +280,10 @@ export const QuickAddTrade = ({ isOpen, onClose }: QuickAddTradeProps) => {
 
                                 <button
                                     type="submit"
-                                    className="mt-4 w-full bg-target text-black font-bold py-3 rounded-xl hover:shadow-[0_0_20px_rgba(0,200,5,0.3)] hover:scale-[1.02] transition-all duration-300 active:scale-[0.98]"
+                                    disabled={isSubmitting}
+                                    className={`mt-4 w-full font-bold py-3 rounded-xl transition-all duration-300 ${isSubmitting ? 'bg-gunmetal-700 text-gray-500 cursor-not-allowed' : 'bg-target text-black hover:shadow-[0_0_20px_rgba(0,200,5,0.3)] hover:scale-[1.02] active:scale-[0.98]'}`}
                                 >
-                                    Save Trade
+                                    {isSubmitting ? 'Saving...' : 'Save Trade'}
                                 </button>
                             </form>
                         </Card>
