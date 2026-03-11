@@ -1,5 +1,4 @@
 import { create } from 'zustand';
-import { persist } from 'zustand/middleware';
 
 export type Direction = 'Long' | 'Short';
 export type Outcome = 'TP' | 'SL' | 'BE';
@@ -81,7 +80,7 @@ const calculateNetProfit = (outcome: Outcome, ticks: number, stop: number, contr
     return gross - totalCommissions;
 };
 
-export const useTradeStore = create<TradeState>((set, get) => ({
+export const useTradeStore = create<TradeState>((set) => ({
     trades: [],
     isLoading: false,
     fetchTrades: async () => {
