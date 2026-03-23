@@ -27,15 +27,24 @@ export const QuickAddTrade = ({ isOpen, onClose }: QuickAddTradeProps) => {
     const [imageLink, setImageLink] = useState('');
     const [account, setAccount] = useState('PERSONAL');
     const [instrument, setInstrument] = useState('NQ');
+    const [strategy, setStrategy] = useState(selectedStrategy === 'ALL' ? 'Order Flow' : selectedStrategy);
     const [notes, setNotes] = useState('');
-    const [strategy, setStrategy] = useState(selectedStrategy);
     const [isNewAccount, setIsNewAccount] = useState(false);
+    const [isNewStrategy, setIsNewStrategy] = useState(false);
     const [isSubmitting, setIsSubmitting] = useState(false);
 
     const activeAccounts = useMemo(() => {
         const accounts = trades.map(t => t.account ? t.account.trim().toUpperCase() : 'PERSONAL');
         const uniqueAccounts = Array.from(new Set(accounts));
         return uniqueAccounts.length > 0 ? uniqueAccounts.sort() : ['PERSONAL'];
+    }, [trades]);
+
+    const activeStrategies = useMemo(() => {
+        const strats = trades.map(t => t.strategy ? t.strategy.trim() : 'Order Flow');
+        const unique = Array.from(new Set(strats));
+        if (!unique.includes('Order Flow')) unique.push('Order Flow');
+        if (!unique.includes('Liquidez')) unique.push('Liquidez');
+        return unique.sort();
     }, [trades]);
 
     const handleSubmit = async (e: React.FormEvent) => {
@@ -259,14 +268,47 @@ export const QuickAddTrade = ({ isOpen, onClose }: QuickAddTradeProps) => {
                                     </div>
                                     <div className="flex flex-col gap-1.5">
                                         <label className="text-xs text-gray-400 font-medium uppercase tracking-wider">Strategy</label>
-                                        <select
-                                            value={strategy}
-                                            onChange={(e) => setStrategy(e.target.value)}
-                                            className="bg-gunmetal-800 border border-gunmetal-700 rounded-lg px-3 py-2 text-sm text-white focus:outline-none focus:border-target/50 transition-colors appearance-none cursor-pointer"
-                                        >
-                                            <option value="Order Flow">ORDER FLOW</option>
-                                            <option value="Liquidez">LIQUIDEZ</option>
-                                        </select>
+                                        {isNewStrategy ? (
+                                            <div className="flex gap-2">
+                                                <input
+                                                    type="text"
+                                                    placeholder="NEW STRATEGY"
+                                                    value={strategy}
+                                                    onChange={(e) => setStrategy(e.target.value)}
+                                                    className="w-full bg-gunmetal-800 border border-gunmetal-700 rounded-lg px-3 py-2 text-sm text-white focus:outline-none focus:border-target/50 transition-colors"
+                                                    autoFocus
+                                                />
+                                                <button
+                                                    type="button"
+                                                    onClick={() => {
+                                                        setIsNewStrategy(false);
+                                                        setStrategy(activeStrategies[0] || 'Order Flow');
+                                                    }}
+                                                    className="px-3 bg-gunmetal-800 border border-gunmetal-700 hover:bg-gunmetal-700 rounded-lg text-gray-400 transition-colors flex items-center justify-center shrink-0"
+                                                    title="Cancel New Strategy"
+                                                >
+                                                    <X className="w-4 h-4" />
+                                                </button>
+                                            </div>
+                                        ) : (
+                                            <select
+                                                value={activeStrategies.includes(strategy) ? strategy : (strategy ? 'NEW' : activeStrategies[0] || 'Order Flow')}
+                                                onChange={(e) => {
+                                                    if (e.target.value === 'NEW') {
+                                                        setStrategy('');
+                                                        setIsNewStrategy(true);
+                                                    } else {
+                                                        setStrategy(e.target.value);
+                                                    }
+                                                }}
+                                                className="bg-gunmetal-800 border border-gunmetal-700 rounded-lg px-3 py-2 text-sm text-white focus:outline-none focus:border-target/50 transition-colors appearance-none cursor-pointer"
+                                            >
+                                                {activeStrategies.map(strat => (
+                                                    <option key={strat} value={strat}>{strat.toUpperCase()}</option>
+                                                ))}
+                                                <option value="NEW">+ Add New Strategy</option>
+                                            </select>
+                                        )}
                                     </div>
                                 </div>
 

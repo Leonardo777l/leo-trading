@@ -90,7 +90,7 @@ const calculateNetProfit = (outcome: Outcome, ticks: number, stop: number, contr
 
 export const useTradeStore = create<TradeState>((set, get) => ({
     trades: [],
-    selectedStrategy: 'Order Flow',
+    selectedStrategy: 'ALL',
     user: null,
     isLoading: false,
     fetchTrades: async () => {
@@ -123,7 +123,7 @@ export const useTradeStore = create<TradeState>((set, get) => ({
             ...tradeInput,
             account: tradeInput.account?.trim().toUpperCase() || 'PERSONAL',
             netProfit,
-            strategy: tradeInput.strategy || 'Order Flow',
+            strategy: tradeInput.strategy ? tradeInput.strategy.trim() : 'Order Flow',
             user_id: user.id
         };
 
@@ -144,7 +144,7 @@ export const useTradeStore = create<TradeState>((set, get) => ({
             netProfit: t.netProfitOverride !== undefined 
                 ? Number(t.netProfitOverride) 
                 : calculateNetProfit(t.outcome, t.ticksTarget, t.stopTicks, t.contracts, t.instrument),
-            strategy: t.strategy || 'Order Flow',
+            strategy: t.strategy ? t.strategy.trim() : 'Order Flow',
             user_id: user.id
         }));
 
@@ -196,6 +196,7 @@ export const useActiveTrades = () => {
     const selectedStrategy = useTradeStore(state => state.selectedStrategy);
     
     return useMemo(() => {
+        if (selectedStrategy === 'ALL') return trades;
         return trades.filter(t => (t.strategy || 'Order Flow') === selectedStrategy);
     }, [trades, selectedStrategy]);
 };
