@@ -1,6 +1,6 @@
 'use client';
 
-import { useTradeStore } from '@/store/useTradeStore';
+import { useTradeStore, useActiveTrades } from '@/store/useTradeStore';
 import { Card } from '@/components/ui/Card';
 import {
     BarChart,
@@ -13,7 +13,7 @@ import {
 } from 'recharts';
 
 export const PsychologyHeatmap = () => {
-    const trades = useTradeStore(state => state.trades);
+    const trades = useActiveTrades();
 
     if (trades.length === 0) {
         return (

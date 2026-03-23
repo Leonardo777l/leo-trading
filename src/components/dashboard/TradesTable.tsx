@@ -1,13 +1,13 @@
 'use client';
 
 import { useState } from 'react';
-import { useTradeStore } from '@/store/useTradeStore';
+import { useTradeStore, useActiveTrades } from '@/store/useTradeStore';
 import { Card } from '@/components/ui/Card';
 import { format } from 'date-fns';
 import { Search, Activity, ExternalLink, Filter } from 'lucide-react';
 
 export const TradesTable = () => {
-    const trades = useTradeStore(state => state.trades);
+    const trades = useActiveTrades();
     const removeTrade = useTradeStore(state => state.removeTrade);
 
     const [searchTerm, setSearchTerm] = useState('');

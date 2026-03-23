@@ -22,10 +22,12 @@ export interface Trade {
     notes?: string; // Custom trade notes/context
     netProfitOverride?: number; // Raw PnL fallback for prop firm statements
     user_id?: string;
+    strategy?: string; // e.g. 'Order Flow' or 'Liquidez'
 }
 
 interface TradeState {
     trades: Trade[];
+    selectedStrategy: string;
     user: User | null;
     isLoading: boolean;
     fetchTrades: () => Promise<void>;
@@ -36,6 +38,7 @@ interface TradeState {
     signInWithGoogle: () => Promise<void>;
     signOut: () => Promise<void>;
     setUser: (user: User | null) => void;
+    setSelectedStrategy: (strategy: string) => void;
 }
 
 const calculateNetProfit = (outcome: Outcome, ticks: number, stop: number, contracts: number, instrument?: string) => {
@@ -87,6 +90,7 @@ const calculateNetProfit = (outcome: Outcome, ticks: number, stop: number, contr
 
 export const useTradeStore = create<TradeState>((set, get) => ({
     trades: [],
+    selectedStrategy: 'Order Flow',
     user: null,
     isLoading: false,
     fetchTrades: async () => {
@@ -119,6 +123,7 @@ export const useTradeStore = create<TradeState>((set, get) => ({
             ...tradeInput,
             account: tradeInput.account?.trim().toUpperCase() || 'PERSONAL',
             netProfit,
+            strategy: tradeInput.strategy || 'Order Flow',
             user_id: user.id
         };
 
@@ -139,6 +144,7 @@ export const useTradeStore = create<TradeState>((set, get) => ({
             netProfit: t.netProfitOverride !== undefined 
                 ? Number(t.netProfitOverride) 
                 : calculateNetProfit(t.outcome, t.ticksTarget, t.stopTicks, t.contracts, t.instrument),
+            strategy: t.strategy || 'Order Flow',
             user_id: user.id
         }));
 
@@ -181,7 +187,18 @@ export const useTradeStore = create<TradeState>((set, get) => ({
         set({ user: null, trades: [] });
     },
     setUser: (user) => set({ user }),
+    setSelectedStrategy: (strategy) => set({ selectedStrategy: strategy }),
 }));
+
+import { useMemo } from 'react';
+export const useActiveTrades = () => {
+    const trades = useTradeStore(state => state.trades);
+    const selectedStrategy = useTradeStore(state => state.selectedStrategy);
+    
+    return useMemo(() => {
+        return trades.filter(t => (t.strategy || 'Order Flow') === selectedStrategy);
+    }, [trades, selectedStrategy]);
+};
 
 export const getTradeStats = (trades: Trade[]) => {
     if (trades.length === 0) return {

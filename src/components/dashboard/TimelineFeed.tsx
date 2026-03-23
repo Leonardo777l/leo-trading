@@ -1,6 +1,6 @@
 'use client';
 
-import { useTradeStore, Trade } from '@/store/useTradeStore';
+import { useTradeStore, useActiveTrades, Trade } from '@/store/useTradeStore';
 import { Card } from '@/components/ui/Card';
 import { format } from 'date-fns';
 import { ArrowUpRight, ArrowDownRight, ExternalLink, Activity } from 'lucide-react';
@@ -20,7 +20,7 @@ const MoodBadge = ({ mood }: { mood: Trade['estadoMental'] }) => {
 };
 
 export const TimelineFeed = () => {
-    const trades = useTradeStore(state => state.trades);
+    const trades = useActiveTrades();
 
     // Sort by date descending
     const sortedTrades = [...trades].sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());

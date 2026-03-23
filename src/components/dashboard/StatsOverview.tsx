@@ -1,13 +1,13 @@
 'use client';
 
-import { useTradeStore, getTradeStats } from '@/store/useTradeStore';
+import { useTradeStore, useActiveTrades, getTradeStats } from '@/store/useTradeStore';
 import { Card } from '@/components/ui/Card';
 import {
     TrendingUp, TrendingDown, Target, Activity, BarChart2, Hash
 } from 'lucide-react';
 
 export const StatsOverview = () => {
-    const trades = useTradeStore(state => state.trades);
+    const trades = useActiveTrades();
     const stats = getTradeStats(trades);
 
     return (

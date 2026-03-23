@@ -1,11 +1,11 @@
 'use client';
 
-import { useTradeStore } from '@/store/useTradeStore';
+import { useTradeStore, useActiveTrades } from '@/store/useTradeStore';
 import { Card } from '@/components/ui/Card';
 import { ExternalLink, Image as ImageIcon } from 'lucide-react';
 
 export const ScreenshotGallery = () => {
-    const trades = useTradeStore(state => state.trades);
+    const trades = useActiveTrades();
 
     // Filter trades that have an image link
     const tradesWithImages = trades.filter(t => t.imageLink && t.imageLink.trim() !== '');

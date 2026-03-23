@@ -1,6 +1,6 @@
 'use client';
 
-import { useTradeStore } from '@/store/useTradeStore';
+import { useTradeStore, useActiveTrades } from '@/store/useTradeStore';
 import { Card } from '@/components/ui/Card';
 import { useMemo } from 'react';
 import { PieChart, Pie, Cell, ResponsiveContainer, Tooltip, Legend } from 'recharts';
@@ -12,7 +12,7 @@ const COLORS = {
 };
 
 export const WinLossDistributionChart = () => {
-    const trades = useTradeStore(state => state.trades);
+    const trades = useActiveTrades();
 
     const data = useMemo(() => {
         let tp = 0;

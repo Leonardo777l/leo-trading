@@ -3,7 +3,7 @@
 import { useState, useMemo } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { X } from 'lucide-react';
-import { useTradeStore, Direction, Outcome, EstadoMental } from '@/store/useTradeStore';
+import { useTradeStore, useActiveTrades, Direction, Outcome, EstadoMental } from '@/store/useTradeStore';
 import { Card } from '@/components/ui/Card';
 import { format } from 'date-fns';
 
@@ -14,6 +14,7 @@ interface QuickAddTradeProps {
 
 export const QuickAddTrade = ({ isOpen, onClose }: QuickAddTradeProps) => {
     const addTrade = useTradeStore(state => state.addTrade);
+    const selectedStrategy = useTradeStore(state => state.selectedStrategy);
     const trades = useTradeStore(state => state.trades);
 
     const [date, setDate] = useState(format(new Date(), 'yyyy-MM-dd'));
@@ -27,6 +28,7 @@ export const QuickAddTrade = ({ isOpen, onClose }: QuickAddTradeProps) => {
     const [account, setAccount] = useState('PERSONAL');
     const [instrument, setInstrument] = useState('NQ');
     const [notes, setNotes] = useState('');
+    const [strategy, setStrategy] = useState(selectedStrategy);
     const [isNewAccount, setIsNewAccount] = useState(false);
     const [isSubmitting, setIsSubmitting] = useState(false);
 
@@ -55,7 +57,8 @@ export const QuickAddTrade = ({ isOpen, onClose }: QuickAddTradeProps) => {
             imageLink,
             account,
             instrument,
-            notes
+            notes,
+            strategy
         });
         
         setIsSubmitting(false);
@@ -252,6 +255,17 @@ export const QuickAddTrade = ({ isOpen, onClose }: QuickAddTradeProps) => {
                                             <option value="CL">CL (Crude Oil)</option>
                                             <option value="GC">GC (Gold)</option>
                                             <option value="OTHER">Other</option>
+                                        </select>
+                                    </div>
+                                    <div className="flex flex-col gap-1.5">
+                                        <label className="text-xs text-gray-400 font-medium uppercase tracking-wider">Strategy</label>
+                                        <select
+                                            value={strategy}
+                                            onChange={(e) => setStrategy(e.target.value)}
+                                            className="bg-gunmetal-800 border border-gunmetal-700 rounded-lg px-3 py-2 text-sm text-white focus:outline-none focus:border-target/50 transition-colors appearance-none cursor-pointer"
+                                        >
+                                            <option value="Order Flow">ORDER FLOW</option>
+                                            <option value="Liquidez">LIQUIDEZ</option>
                                         </select>
                                     </div>
                                 </div>

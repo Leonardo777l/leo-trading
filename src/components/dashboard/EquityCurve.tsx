@@ -1,6 +1,6 @@
 'use client';
 
-import { useTradeStore } from '@/store/useTradeStore';
+import { useTradeStore, useActiveTrades } from '@/store/useTradeStore';
 import { Card } from '@/components/ui/Card';
 import {
     LineChart,
@@ -15,7 +15,7 @@ import {
 import { format } from 'date-fns';
 
 export const EquityCurve = () => {
-    const trades = useTradeStore(state => state.trades);
+    const trades = useActiveTrades();
 
     if (trades.length === 0) {
         return (

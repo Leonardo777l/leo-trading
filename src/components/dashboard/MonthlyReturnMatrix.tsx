@@ -1,13 +1,14 @@
+
 'use client';
 
-import { useTradeStore } from '@/store/useTradeStore';
+import { useTradeStore, useActiveTrades } from '@/store/useTradeStore';
 import { Card } from '@/components/ui/Card';
 import { useMemo, useState } from 'react';
 
 const MONTHS = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
 
 export const MonthlyReturnMatrix = () => {
-    const trades = useTradeStore(state => state.trades);
+    const trades = useActiveTrades();
     const [initialBalance, setInitialBalance] = useState<number>(50000); // Default to $50k
 
     const { matrixData, years } = useMemo(() => {

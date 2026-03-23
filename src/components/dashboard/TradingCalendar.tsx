@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useMemo, useEffect } from 'react';
-import { useTradeStore } from '@/store/useTradeStore';
+import { useTradeStore, useActiveTrades } from '@/store/useTradeStore';
 import { Card } from '@/components/ui/Card';
 import { ChevronLeft, ChevronRight } from 'lucide-react';
 import {
@@ -18,7 +18,7 @@ import {
 } from 'date-fns';
 
 export const TradingCalendar = () => {
-    const trades = useTradeStore(state => state.trades);
+    const trades = useActiveTrades();
     const [currentMonth, setCurrentMonth] = useState(new Date());
     const [mounted, setMounted] = useState(false);
 

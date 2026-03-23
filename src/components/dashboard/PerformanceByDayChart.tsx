@@ -1,6 +1,6 @@
 'use client';
 
-import { useTradeStore } from '@/store/useTradeStore';
+import { useTradeStore, useActiveTrades } from '@/store/useTradeStore';
 import { Card } from '@/components/ui/Card';
 import { useMemo } from 'react';
 import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, Cell } from 'recharts';
@@ -9,7 +9,7 @@ import { format } from 'date-fns';
 const DAYS_OF_WEEK = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday'];
 
 export const PerformanceByDayChart = () => {
-    const trades = useTradeStore(state => state.trades);
+    const trades = useActiveTrades();
 
     const data = useMemo(() => {
         // Initialize an accumulator for each day
