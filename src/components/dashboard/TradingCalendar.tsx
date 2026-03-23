@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useMemo, useEffect } from 'react';
-import { useTradeStore, useActiveTrades } from '@/store/useTradeStore';
+import { useActiveTrades } from '@/store/useTradeStore';
 import { Card } from '@/components/ui/Card';
 import { ChevronLeft, ChevronRight } from 'lucide-react';
 import {

@@ -1,7 +1,7 @@
 'use client';
 
 import { useState } from 'react';
-import { useTradeStore, useActiveTrades } from '@/store/useTradeStore';
+import { useActiveTrades, useTradeStore } from '@/store/useTradeStore';
 import { Card } from '@/components/ui/Card';
 import { format } from 'date-fns';
 import { Search, Activity, ExternalLink, Filter } from 'lucide-react';

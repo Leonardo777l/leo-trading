@@ -1,6 +1,6 @@
 'use client';
 
-import { useTradeStore, useActiveTrades } from '@/store/useTradeStore';
+import { useActiveTrades } from '@/store/useTradeStore';
 import { Card } from '@/components/ui/Card';
 import { ExternalLink, Image as ImageIcon } from 'lucide-react';
 

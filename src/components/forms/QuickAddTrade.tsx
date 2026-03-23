@@ -3,7 +3,7 @@
 import { useState, useMemo } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { X } from 'lucide-react';
-import { useTradeStore, useActiveTrades, Direction, Outcome, EstadoMental } from '@/store/useTradeStore';
+import { useTradeStore, Direction, Outcome, EstadoMental } from '@/store/useTradeStore';
 import { Card } from '@/components/ui/Card';
 import { format } from 'date-fns';
 

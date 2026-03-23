@@ -1,6 +1,6 @@
 'use client';
 
-import { useTradeStore, useActiveTrades, getTradeStats } from '@/store/useTradeStore';
+import { useActiveTrades, getTradeStats } from '@/store/useTradeStore';
 import { Card } from '@/components/ui/Card';
 import {
     TrendingUp, TrendingDown, Target, Activity, BarChart2, Hash

@@ -1,6 +1,6 @@
 'use client';
 
-import { useTradeStore, useActiveTrades, Trade } from '@/store/useTradeStore';
+import { useActiveTrades, Trade } from '@/store/useTradeStore';
 import { Card } from '@/components/ui/Card';
 import { format } from 'date-fns';
 import { ArrowUpRight, ArrowDownRight, ExternalLink, Activity } from 'lucide-react';
