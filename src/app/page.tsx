@@ -10,7 +10,6 @@ import { MonthlyReturnMatrix } from '@/components/dashboard/MonthlyReturnMatrix'
 import { WinLossDistributionChart } from '@/components/dashboard/WinLossDistributionChart';
 import { TradingCalendar } from '@/components/dashboard/TradingCalendar';
 import { QuickAddTrade } from '@/components/forms/QuickAddTrade';
-import { RecoveryButton } from '@/components/dashboard/RecoveryButton';
 
 export default function Home() {
   const [isQuickAddOpen, setIsQuickAddOpen] = useState(false);
@@ -41,7 +40,6 @@ export default function Home() {
               </p>
             </div>
             <div className="flex items-center gap-4">
-              <RecoveryButton />
               <div className="flex items-center gap-2 bg-gunmetal-900 border border-gunmetal-700 px-3 py-1.5 rounded-full">
                 <span className="text-[10px] font-bold text-gray-400 uppercase tracking-wider">STRATEGY:</span>
                 <select

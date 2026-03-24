@@ -2,7 +2,7 @@
 
 import { useState, useRef } from 'react';
 import Papa from 'papaparse';
-import { Upload, X, Save, Trash2 } from 'lucide-react';
+import { Upload, X, Save } from 'lucide-react';
 import { Card } from '@/components/ui/Card';
 import { useTradeStore, Direction, Outcome, EstadoMental, Trade } from '@/store/useTradeStore';
 import { format } from 'date-fns';
@@ -15,8 +15,6 @@ export const CsvUploader = () => {
     const [isImporting, setIsImporting] = useState(false);
     const inputRef = useRef<HTMLInputElement>(null);
     const bulkAddTrades = useTradeStore(state => state.bulkAddTrades);
-    const clearTrades = useTradeStore(state => state.clearTrades);
-    const trades = useTradeStore(state => state.trades);
 
     const handleDrag = (e: React.DragEvent) => {
         e.preventDefault();
@@ -220,24 +218,6 @@ export const CsvUploader = () => {
             <div className="flex items-center justify-between">
                 <h3 className="text-lg font-bold text-white tracking-tight">Import Data</h3>
                 <div className="flex items-center gap-2">
-                    {trades.length > 0 && !parsedData && (
-                        <button
-                            onClick={() => {
-                                if (window.confirm('¿Seguro que quieres borrar TODOS los trades importados? Esta acción no se puede deshacer.')) {
-                                    clearTrades();
-                                    // Hard fallback just in case Zustand persist fights the clear
-                                    if (typeof window !== 'undefined') {
-                                        window.localStorage.removeItem('leo-trading-storage');
-                                        window.location.reload();
-                                    }
-                                }
-                            }}
-                            className="text-stop bg-stop/10 hover:bg-stop/20 px-3 py-1.5 rounded-md flex items-center gap-1.5 text-xs font-bold transition-colors"
-                        >
-                            <Trash2 className="w-4 h-4" />
-                            RESET DB
-                        </button>
-                    )}
                     {parsedData && (
                         <button
                             onClick={() => { setParsedData(null); setMappedTrades([]); if (inputRef.current) inputRef.current.value = ''; }}
