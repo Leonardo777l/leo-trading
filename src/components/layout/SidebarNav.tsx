@@ -1,6 +1,6 @@
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
-import { LayoutDashboard, ListTree, Wallet, LogOut } from 'lucide-react';
+import { LayoutDashboard, ListTree, Wallet, LogOut, BookOpenText } from 'lucide-react';
 import { useTradeStore } from '@/store/useTradeStore';
 
 export const SidebarNav = () => {
@@ -11,6 +11,7 @@ export const SidebarNav = () => {
         { href: '/', icon: LayoutDashboard, label: 'Dashboard' },
         { href: '/trades', icon: ListTree, label: 'Trades & Data' },
         { href: '/accounts', icon: Wallet, label: 'Accounts' },
+        { href: '/rules', icon: BookOpenText, label: 'Reglas' },
     ];
 
     return (
@@ -23,12 +24,14 @@ export const SidebarNav = () => {
                     <Link
                         key={link.href}
                         href={link.href}
-                        className={`group relative flex items-center justify-center w-12 h-12 rounded-full transition-all duration-300 ${isActive
+                        target={link.href === '/rules' ? '_blank' : undefined}
+                        rel={link.href === '/rules' ? 'noopener noreferrer' : undefined}
+                        className={`group relative flex items-center justify-center w-12 h-12 rounded-full transition-all duration-300 ${isActive && link.href !== '/rules'
                             ? 'bg-target text-black shadow-[0_0_15px_rgba(0,200,5,0.4)]'
                             : 'text-gray-500 hover:text-white hover:bg-gunmetal-800'
                             }`}
                     >
-                        <Icon className={`w-5 h-5 ${isActive ? 'stroke-[2.5]' : ''}`} />
+                        <Icon className={`w-5 h-5 ${isActive && link.href !== '/rules' ? 'stroke-[2.5]' : ''}`} />
 
                         <div className="absolute left-16 px-3 py-1.5 bg-gunmetal-800 text-white text-xs font-bold rounded opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all whitespace-nowrap z-[100] md:block hidden shadow-xl border border-gunmetal-700">
                             {link.label}
