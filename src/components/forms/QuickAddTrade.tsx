@@ -23,7 +23,6 @@ export const QuickAddTrade = ({ isOpen, onClose }: QuickAddTradeProps) => {
     const [ticksTarget, setTicksTarget] = useState<number>(0);
     const [stopTicks, setStopTicks] = useState<number>(0);
     const [contracts, setContracts] = useState<number>(1);
-    const [netProfitOverride, setNetProfitOverride] = useState<string>('');
     const [estadoMental, setEstadoMental] = useState<EstadoMental>('Calm');
     const [imageLink, setImageLink] = useState('');
     const [account, setAccount] = useState('PERSONAL');
@@ -63,7 +62,6 @@ export const QuickAddTrade = ({ isOpen, onClose }: QuickAddTradeProps) => {
             ticksTarget: Number(ticksTarget),
             stopTicks: Number(stopTicks),
             contracts: Number(contracts),
-            netProfitOverride: netProfitOverride !== '' ? Number(netProfitOverride) : undefined,
             estadoMental,
             imageLink,
             account,
@@ -184,17 +182,6 @@ export const QuickAddTrade = ({ isOpen, onClose }: QuickAddTradeProps) => {
                                             className="bg-gunmetal-800 border border-gunmetal-700 rounded-lg px-3 py-2 text-sm text-white focus:outline-none focus:border-target/50 transition-colors"
                                         />
                                     </div>
-                                </div>
-
-                                <div className="flex flex-col gap-1.5">
-                                    <label className="text-xs text-gray-400 font-medium uppercase tracking-wider">Final Profit/Loss ($) (Optional)</label>
-                                    <input
-                                        type="number"
-                                        placeholder="e.g. 150 for win, -50 for loss"
-                                        value={netProfitOverride}
-                                        onChange={(e) => setNetProfitOverride(e.target.value)}
-                                        className="bg-gunmetal-800 border border-gunmetal-700 rounded-lg px-3 py-2 text-sm text-white focus:outline-none focus:border-target/50 transition-colors"
-                                    />
                                 </div>
 
                                 <div className="flex flex-col gap-1.5">

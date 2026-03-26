@@ -20,7 +20,6 @@ export interface Trade {
     account?: string; // e.g. 'Fondeo', 'Personal'
     instrument?: string; // e.g. 'NQ', 'MNQ', 'ES'
     notes?: string; // Custom trade notes/context
-    netProfitOverride?: number; // Raw PnL fallback for prop firm statements
     user_id?: string;
     strategy?: string; // e.g. 'Order Flow' or 'Liquidez'
 }
@@ -115,9 +114,7 @@ export const useTradeStore = create<TradeState>((set, get) => ({
         const { user } = get();
         if (!user) return;
 
-        const netProfit = tradeInput.netProfitOverride !== undefined 
-            ? Number(tradeInput.netProfitOverride) 
-            : calculateNetProfit(tradeInput.outcome, tradeInput.ticksTarget, tradeInput.stopTicks, tradeInput.contracts, tradeInput.instrument);
+        const netProfit = calculateNetProfit(tradeInput.outcome, tradeInput.ticksTarget, tradeInput.stopTicks, tradeInput.contracts, tradeInput.instrument);
             
         const newTrade = {
             ...tradeInput,
@@ -141,9 +138,7 @@ export const useTradeStore = create<TradeState>((set, get) => ({
         const newTrades = tradesInput.map(t => ({
             ...t,
             account: t.account?.trim().toUpperCase() || 'PERSONAL',
-            netProfit: t.netProfitOverride !== undefined 
-                ? Number(t.netProfitOverride) 
-                : calculateNetProfit(t.outcome, t.ticksTarget, t.stopTicks, t.contracts, t.instrument),
+            netProfit: calculateNetProfit(t.outcome, t.ticksTarget, t.stopTicks, t.contracts, t.instrument),
             strategy: t.strategy ? t.strategy.trim() : 'Order Flow',
             user_id: user.id
         }));

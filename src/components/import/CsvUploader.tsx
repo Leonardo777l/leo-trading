@@ -192,10 +192,6 @@ export const CsvUploader = () => {
                 notes
             };
 
-            if (netProfitOverride !== undefined && !isNaN(netProfitOverride)) {
-                payload.netProfitOverride = netProfitOverride;
-            }
-
             return payload;
         });
 
