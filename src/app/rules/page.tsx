@@ -4,11 +4,14 @@ import { useState, useEffect } from 'react';
 import { ShieldAlert, Target, Plus, Trash2, CheckCircle2, Circle } from 'lucide-react';
 import { useRuleStore } from '@/store/useRuleStore';
 import { useTradeStore } from '@/store/useTradeStore';
+import { DashboardLayout } from '@/components/layout/DashboardLayout';
+import { QuickAddTrade } from '@/components/forms/QuickAddTrade';
 
 export default function RulesPage() {
     const { user } = useTradeStore();
     const { rules, fetchRules, addRule, removeRule, isLoading } = useRuleStore();
 
+    const [isQuickAddOpen, setIsQuickAddOpen] = useState(false);
     const [newTitle, setNewTitle] = useState('');
     const [newDesc, setNewDesc] = useState('');
     const [isAdding, setIsAdding] = useState(false);
@@ -45,32 +48,22 @@ export default function RulesPage() {
         setCheckedRules(new Set());
     };
 
-    // If still loading or not logged in
-    if (!user) {
-        return (
-            <div className="min-h-screen bg-black w-full flex items-center justify-center p-6">
-                <div className="text-center bg-gunmetal-900 border border-gunmetal-700 p-8 rounded-3xl max-w-md w-full shadow-2xl">
-                    <ShieldAlert className="w-16 h-16 text-gray-600 mx-auto mb-4" />
-                    <h2 className="text-2xl font-black text-white mb-2">Acceso Denegado</h2>
-                    <p className="text-gray-400 font-medium">Inicia sesión interactuando en el dashboard para crear tus propias reglas de trading.</p>
-                </div>
-            </div>
-        );
-    }
-
     return (
-        <div className="min-h-screen bg-black w-full flex flex-col py-12 px-4 sm:px-6 lg:px-12 items-center">
-            <div className="w-full max-w-7xl flex flex-col gap-10">
-                <header className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-gunmetal-700/50 pb-6 w-full">
-                    <div>
-                        <h1 className="text-4xl md:text-5xl font-black tracking-tighter text-transparent bg-clip-text bg-gradient-to-r from-white to-gray-500">
-                            REGLAS Y CHECKLIST
-                        </h1>
-                        <p className="text-xs md:text-sm font-semibold text-gray-500 tracking-widest mt-2 uppercase">
-                            Disciplina, Estrategia y Gestión de Riesgo Personalizada
-                        </p>
-                    </div>
-                </header>
+        <>
+            <DashboardLayout
+                onQuickAdd={() => setIsQuickAddOpen(true)}
+            >
+                <div className="flex flex-col gap-6 h-full overflow-y-auto custom-scrollbar pb-24 pr-2">
+                    <header className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+                        <div>
+                            <h1 className="text-3xl font-black tracking-tighter text-transparent bg-clip-text bg-gradient-to-r from-white to-gray-500">
+                                REGLAS Y CHECKLIST
+                            </h1>
+                            <p className="text-xs font-semibold text-gray-500 tracking-widest mt-1 uppercase">
+                                Disciplina, Estrategia y Gestión de Riesgo Personalizada
+                            </p>
+                        </div>
+                    </header>
 
                 <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 w-full">
                     
@@ -248,7 +241,13 @@ export default function RulesPage() {
                     </div>
 
                 </div>
-            </div>
-        </div>
+                </div>
+            </DashboardLayout>
+
+            <QuickAddTrade
+                isOpen={isQuickAddOpen}
+                onClose={() => setIsQuickAddOpen(false)}
+            />
+        </>
     );
 }
