@@ -69,16 +69,12 @@ const calculateNetProfit = (outcome: Outcome, ticks: number, stop: number, contr
             break;
     }
 
-    const isDollarInput = (ticks > 150 || stop > 150);
-    const effectiveTickValue = isDollarInput ? 1 : tickValue;
-    const effectiveContracts = isDollarInput ? 1 : contracts; 
-
     let gross = 0;
     
     if (outcome === 'TP') {
-        gross = ticks * effectiveTickValue * effectiveContracts;
+        gross = ticks * tickValue * contracts;
     } else if (outcome === 'SL') {
-        gross = -(stop * effectiveTickValue * effectiveContracts);
+        gross = -(stop * tickValue * contracts);
     } else {
         gross = 0; // BE
     }

@@ -20,8 +20,8 @@ export const QuickAddTrade = ({ isOpen, onClose }: QuickAddTradeProps) => {
     const [date, setDate] = useState(format(new Date(), 'yyyy-MM-dd'));
     const [direction, setDirection] = useState<Direction>('Long');
     const [outcome, setOutcome] = useState<Outcome>('TP');
-    const [ticksTarget, setTicksTarget] = useState<number>(0);
-    const [stopTicks, setStopTicks] = useState<number>(0);
+    const [targetMoney, setTargetMoney] = useState<number | ''>('');
+    const [stopMoney, setStopMoney] = useState<number | ''>('');
     const [contracts, setContracts] = useState<number>(1);
     const [estadoMental, setEstadoMental] = useState<EstadoMental>('Calm');
     const [imageLink, setImageLink] = useState('');
@@ -47,6 +47,33 @@ export const QuickAddTrade = ({ isOpen, onClose }: QuickAddTradeProps) => {
         return unique.sort();
     }, [trades]);
 
+    const getInstrumentInfo = (inst: string) => {
+        switch (inst.toUpperCase()) {
+            case 'NQ': return { tickValue: 5.00, comm: 4.10, ticksPerPoint: 4 };
+            case 'ES': return { tickValue: 12.50, comm: 4.10, ticksPerPoint: 4 };
+            case 'MES': return { tickValue: 1.25, comm: 1.20, ticksPerPoint: 4 };
+            case 'CL': return { tickValue: 10.00, comm: 4.50, ticksPerPoint: 100 }; 
+            case 'GC': return { tickValue: 10.00, comm: 4.50, ticksPerPoint: 10 }; 
+            case 'MNQ':
+            default: return { tickValue: 0.50, comm: 1.20, ticksPerPoint: 4 };
+        }
+    };
+
+    const instrumentInfo = useMemo(() => getInstrumentInfo(instrument), [instrument]);
+    const { tickValue, comm, ticksPerPoint } = instrumentInfo;
+
+    const calculatedTicksTarget = targetMoney ? (Number(targetMoney) / (tickValue * contracts)) : 0;
+    const calculatedStopTicks = stopMoney ? (Number(stopMoney) / (tickValue * contracts)) : 0;
+    const targetPoints = calculatedTicksTarget / ticksPerPoint;
+    const stopPoints = calculatedStopTicks / ticksPerPoint;
+    
+    const totalComm = contracts * comm;
+    const estimatedPnL = outcome === 'TP' 
+        ? (Number(targetMoney) || 0) - totalComm 
+        : outcome === 'SL' 
+            ? -(Number(stopMoney) || 0) - totalComm 
+            : -totalComm;
+
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
         setIsSubmitting(true);
@@ -59,8 +86,8 @@ export const QuickAddTrade = ({ isOpen, onClose }: QuickAddTradeProps) => {
             date: new Date(safeDate).toISOString(),
             direction,
             outcome,
-            ticksTarget: Number(ticksTarget),
-            stopTicks: Number(stopTicks),
+            ticksTarget: calculatedTicksTarget,
+            stopTicks: calculatedStopTicks,
             contracts: Number(contracts),
             estadoMental,
             imageLink,
@@ -72,6 +99,8 @@ export const QuickAddTrade = ({ isOpen, onClose }: QuickAddTradeProps) => {
         
         setIsSubmitting(false);
         onClose();
+        setTargetMoney('');
+        setStopMoney('');
     };
 
     return (
@@ -150,24 +179,28 @@ export const QuickAddTrade = ({ isOpen, onClose }: QuickAddTradeProps) => {
 
                                 <div className="grid grid-cols-3 gap-4">
                                     <div className="flex flex-col gap-1.5">
-                                        <label className="text-xs text-gray-400 font-medium uppercase tracking-wider">Ticks (Target)</label>
+                                        <label className="text-xs text-gray-400 font-medium uppercase tracking-wider">Target ($)</label>
                                         <input
                                             type="number"
                                             min="0"
+                                            step="0.01"
                                             required
-                                            value={ticksTarget}
-                                            onChange={(e) => setTicksTarget(Number(e.target.value))}
+                                            value={targetMoney}
+                                            onChange={(e) => setTargetMoney(e.target.value ? Number(e.target.value) : '')}
+                                            placeholder="Obtained ($)"
                                             className="bg-gunmetal-800 border border-gunmetal-700 rounded-lg px-3 py-2 text-sm text-white focus:outline-none focus:border-target/50 transition-colors"
                                         />
                                     </div>
                                     <div className="flex flex-col gap-1.5">
-                                        <label className="text-xs text-gray-400 font-medium uppercase tracking-wider">Stop (Ticks)</label>
+                                        <label className="text-xs text-gray-400 font-medium uppercase tracking-wider">Stop ($)</label>
                                         <input
                                             type="number"
                                             min="0"
+                                            step="0.01"
                                             required
-                                            value={stopTicks}
-                                            onChange={(e) => setStopTicks(Number(e.target.value))}
+                                            value={stopMoney}
+                                            onChange={(e) => setStopMoney(e.target.value ? Number(e.target.value) : '')}
+                                            placeholder="Risked ($)"
                                             className="bg-gunmetal-800 border border-gunmetal-700 rounded-lg px-3 py-2 text-sm text-white focus:outline-none focus:border-target/50 transition-colors"
                                         />
                                     </div>
@@ -181,6 +214,25 @@ export const QuickAddTrade = ({ isOpen, onClose }: QuickAddTradeProps) => {
                                             onChange={(e) => setContracts(Number(e.target.value))}
                                             className="bg-gunmetal-800 border border-gunmetal-700 rounded-lg px-3 py-2 text-sm text-white focus:outline-none focus:border-target/50 transition-colors"
                                         />
+                                    </div>
+                                </div>
+                                
+                                <div className="p-3 bg-gunmetal-900 border border-gunmetal-700 rounded-lg flex flex-col gap-2">
+                                    <div className="flex items-center justify-between text-xs font-medium text-gray-400 uppercase tracking-wider">
+                                        <span>Calculated Stats ({instrument})</span>
+                                        <span className={estimatedPnL > 0 ? 'text-target' : estimatedPnL < 0 ? 'text-stop' : 'text-breakeven'}>
+                                            Est. PnL: ${estimatedPnL.toFixed(2)}
+                                        </span>
+                                    </div>
+                                    <div className="grid grid-cols-2 gap-4 mt-1">
+                                        <div className="flex justify-between items-center text-sm">
+                                            <span className="text-gray-500">Target Points:</span>
+                                            <span className="text-white font-mono">{targetPoints > 0 ? targetPoints.toFixed(2) : '0.00'} pts</span>
+                                        </div>
+                                        <div className="flex justify-between items-center text-sm">
+                                            <span className="text-gray-500">Stop Points:</span>
+                                            <span className="text-white font-mono">{stopPoints > 0 ? stopPoints.toFixed(2) : '0.00'} pts</span>
+                                        </div>
                                     </div>
                                 </div>
 

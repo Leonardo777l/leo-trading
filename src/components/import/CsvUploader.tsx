@@ -127,6 +127,17 @@ export const CsvUploader = () => {
 
             const rawContracts = parseInt(getVal(['contracts', 'qty', 'size', 'contratos', 'lotes']), 10);
             const contracts = isNaN(rawContracts) ? 1 : rawContracts;
+            
+            // Compatibility logic: if a CSV uploaded ticks > 150, assume they are dollars and convert back to ticks.
+            const getTickValue = (inst: string) => {
+                switch(inst.toUpperCase()) {
+                    case 'NQ': return 5.00;
+                    case 'ES': return 12.50;
+                    case 'MES': return 1.25;
+                    case 'CL': case 'GC': return 10.00;
+                    default: return 0.50; // MNQ
+                }
+            };
 
             const rawOverrideStr = getVal(['closed p&l', 'net profit', 'pnl', 'net', 'profit/loss', 'total']).toString().replace(/[^0-9.-]/g, '');
             const netProfitOverride = rawOverrideStr ? parseFloat(rawOverrideStr) : undefined;
@@ -177,13 +188,20 @@ export const CsvUploader = () => {
 
             const notes = getVal(['notes', 'notas', 'comentarios', 'comments', 'desc', 'descripcion']);
 
+            const instrumentTickValue = getTickValue(instrument);
+            const isTargetDollar = ticksTarget > 150;
+            const isStopDollar = stopTicks > 150;
+            
+            const trueTicksTarget = isTargetDollar ? (ticksTarget / (instrumentTickValue * contracts)) : ticksTarget;
+            const trueStopTicks = isStopDollar ? (stopTicks / (instrumentTickValue * contracts)) : stopTicks;
+
             // eslint-disable-next-line @typescript-eslint/no-explicit-any
             const payload: any = {
                 date: validDate.toISOString(),
                 direction,
                 outcome,
-                ticksTarget,
-                stopTicks,
+                ticksTarget: trueTicksTarget,
+                stopTicks: trueStopTicks,
                 contracts,
                 estadoMental,
                 imageLink: getVal(['link', 'image', 'url', 'liga', 'tv']),
