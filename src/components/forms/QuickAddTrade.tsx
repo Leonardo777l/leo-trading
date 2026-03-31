@@ -190,7 +190,6 @@ export const QuickAddTrade = ({ isOpen, onClose }: QuickAddTradeProps) => {
                                             type="number"
                                             min="0"
                                             step="0.01"
-                                            required
                                             value={targetMoney}
                                             onChange={(e) => setTargetMoney(e.target.value ? Number(e.target.value) : '')}
                                             placeholder="Obtained ($)"
@@ -203,7 +202,6 @@ export const QuickAddTrade = ({ isOpen, onClose }: QuickAddTradeProps) => {
                                             type="number"
                                             min="0"
                                             step="0.01"
-                                            required
                                             value={stopMoney}
                                             onChange={(e) => setStopMoney(e.target.value ? Number(e.target.value) : '')}
                                             placeholder="Risked ($)"
