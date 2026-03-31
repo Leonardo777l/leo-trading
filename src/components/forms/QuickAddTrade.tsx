@@ -102,9 +102,10 @@ export const QuickAddTrade = ({ isOpen, onClose }: QuickAddTradeProps) => {
             onClose();
             setTargetMoney('');
             setStopMoney('');
-        } catch (error: any) {
+        } catch (error: unknown) {
             console.error(error);
-            alert(`Error al guardar la entrada: ${error?.message || JSON.stringify(error)}`);
+            const errorMessage = error instanceof Error ? error.message : JSON.stringify(error);
+            alert(`Error al guardar la entrada: ${errorMessage}`);
             setIsSubmitting(false);
         }
     };
