@@ -62,8 +62,8 @@ export const QuickAddTrade = ({ isOpen, onClose }: QuickAddTradeProps) => {
     const instrumentInfo = useMemo(() => getInstrumentInfo(instrument), [instrument]);
     const { tickValue, comm, ticksPerPoint } = instrumentInfo;
 
-    const calculatedTicksTarget = targetMoney ? (Number(targetMoney) / (tickValue * contracts)) : 0;
-    const calculatedStopTicks = stopMoney ? (Number(stopMoney) / (tickValue * contracts)) : 0;
+    const calculatedTicksTarget = targetMoney ? Math.round(Number(targetMoney) / (tickValue * contracts)) : 0;
+    const calculatedStopTicks = stopMoney ? Math.round(Number(stopMoney) / (tickValue * contracts)) : 0;
     const targetPoints = calculatedTicksTarget / ticksPerPoint;
     const stopPoints = calculatedStopTicks / ticksPerPoint;
     
@@ -82,25 +82,31 @@ export const QuickAddTrade = ({ isOpen, onClose }: QuickAddTradeProps) => {
         // e.g. "2026-03-11" -> "2026-03-11T12:00:00"
         const safeDate = date.includes('T') ? date : `${date}T12:00:00`;
 
-        await addTrade({
-            date: new Date(safeDate).toISOString(),
-            direction,
-            outcome,
-            ticksTarget: calculatedTicksTarget,
-            stopTicks: calculatedStopTicks,
-            contracts: Number(contracts),
-            estadoMental,
-            imageLink,
-            account,
-            instrument,
-            notes,
-            strategy
-        });
-        
-        setIsSubmitting(false);
-        onClose();
-        setTargetMoney('');
-        setStopMoney('');
+        try {
+            await addTrade({
+                date: new Date(safeDate).toISOString(),
+                direction,
+                outcome,
+                ticksTarget: calculatedTicksTarget,
+                stopTicks: calculatedStopTicks,
+                contracts: Number(contracts),
+                estadoMental,
+                imageLink,
+                account,
+                instrument,
+                notes,
+                strategy
+            });
+            
+            setIsSubmitting(false);
+            onClose();
+            setTargetMoney('');
+            setStopMoney('');
+        } catch (error: any) {
+            console.error(error);
+            alert(`Error al guardar la entrada: ${error?.message || JSON.stringify(error)}`);
+            setIsSubmitting(false);
+        }
     };
 
     return (

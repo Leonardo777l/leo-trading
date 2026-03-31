@@ -125,6 +125,7 @@ export const useTradeStore = create<TradeState>((set, get) => ({
             set((state) => ({ trades: [...state.trades, data as Trade] }));
         } else {
             console.error('Failed to add trade:', error);
+            throw error;
         }
     },
     bulkAddTrades: async (tradesInput) => {
