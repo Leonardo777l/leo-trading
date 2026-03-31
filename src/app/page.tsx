@@ -63,11 +63,11 @@ export default function Home() {
 
           <StatsOverview />
 
-          <div className="grid grid-cols-1 xl:grid-cols-3 gap-6 flex-1 min-h-[500px]">
-            <div className="xl:col-span-2">
+          <div className="grid grid-cols-1 xl:grid-cols-3 gap-6">
+            <div className="xl:col-span-2 min-h-[650px]">
               <TradingCalendar />
             </div>
-            <div>
+            <div className="min-h-[400px]">
               <WinLossDistributionChart />
             </div>
           </div>
