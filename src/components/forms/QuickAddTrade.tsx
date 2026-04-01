@@ -44,6 +44,7 @@ export const QuickAddTrade = ({ isOpen, onClose }: QuickAddTradeProps) => {
         const unique = Array.from(new Set(strats));
         if (!unique.includes('Order Flow')) unique.push('Order Flow');
         if (!unique.includes('Liquidez')) unique.push('Liquidez');
+        if (!unique.includes('HARD CALPING')) unique.push('HARD CALPING');
         return unique.sort();
     }, [trades]);
 
