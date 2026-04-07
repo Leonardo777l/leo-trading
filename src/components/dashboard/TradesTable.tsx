@@ -10,6 +10,7 @@ export const TradesTable = () => {
     const trades = useActiveTrades();
     const allTrades = useTradeStore(state => state.trades);
     const removeTrade = useTradeStore(state => state.removeTrade);
+    const selectedStrategy = useTradeStore(state => state.selectedStrategy);
 
     const [searchTerm, setSearchTerm] = useState('');
     const [filterOutcome, setFilterOutcome] = useState('All');
@@ -34,11 +35,11 @@ export const TradesTable = () => {
     const sortedTrades = [...filteredTrades].sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
 
     const handleExportCSV = () => {
-        if (allTrades.length === 0) return;
+        if (trades.length === 0) return;
 
         const headers = ['Date', 'Result', 'Net P&L', 'Asset', 'Account', 'Direction', 'Contracts', 'Target Ticks', 'Stop Ticks', 'Strategy', 'Mental State', 'Notes'];
         
-        const rows = allTrades.map(t => [
+        const rows = trades.map(t => [
             format(new Date(t.date), 'yyyy-MM-dd HH:mm'),
             t.outcome,
             t.netProfit.toFixed(2),
@@ -62,7 +63,10 @@ export const TradesTable = () => {
         const url = URL.createObjectURL(blob);
         const link = document.createElement('a');
         link.href = url;
-        link.setAttribute('download', `global_trades_export_${format(new Date(), 'yyyy-MM-dd')}.csv`);
+        
+        const strategyName = selectedStrategy === 'ALL' ? 'all_strategies' : selectedStrategy.toLowerCase().replace(/\s+/g, '_');
+        link.setAttribute('download', `${strategyName}_trades_export_${format(new Date(), 'yyyy-MM-dd')}.csv`);
+        
         document.body.appendChild(link);
         link.click();
         document.body.removeChild(link);
