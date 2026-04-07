@@ -4,10 +4,11 @@ import { useState } from 'react';
 import { useActiveTrades, useTradeStore } from '@/store/useTradeStore';
 import { Card } from '@/components/ui/Card';
 import { format } from 'date-fns';
-import { Search, Activity, ExternalLink, Filter } from 'lucide-react';
+import { Search, Activity, ExternalLink, Filter, Download } from 'lucide-react';
 
 export const TradesTable = () => {
     const trades = useActiveTrades();
+    const allTrades = useTradeStore(state => state.trades);
     const removeTrade = useTradeStore(state => state.removeTrade);
 
     const [searchTerm, setSearchTerm] = useState('');
@@ -31,6 +32,41 @@ export const TradesTable = () => {
 
     // Sort by date descending
     const sortedTrades = [...filteredTrades].sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
+
+    const handleExportCSV = () => {
+        if (allTrades.length === 0) return;
+
+        const headers = ['Date', 'Result', 'Net P&L', 'Asset', 'Account', 'Direction', 'Contracts', 'Target Ticks', 'Stop Ticks', 'Strategy', 'Mental State', 'Notes'];
+        
+        const rows = allTrades.map(t => [
+            format(new Date(t.date), 'yyyy-MM-dd HH:mm'),
+            t.outcome,
+            t.netProfit.toFixed(2),
+            t.instrument || 'NQ',
+            t.account || 'PERSONAL',
+            t.direction,
+            t.contracts,
+            t.ticksTarget,
+            t.stopTicks,
+            t.strategy || 'Order Flow',
+            t.estadoMental,
+            `"${(t.notes || '').replace(/"/g, '""')}"`
+        ]);
+
+        const csvContent = [
+            headers.join(','),
+            ...rows.map(row => row.join(','))
+        ].join('\n');
+
+        const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+        const url = URL.createObjectURL(blob);
+        const link = document.createElement('a');
+        link.href = url;
+        link.setAttribute('download', `global_trades_export_${format(new Date(), 'yyyy-MM-dd')}.csv`);
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+    };
 
     if (trades.length === 0) {
         return (
@@ -88,6 +124,15 @@ export const TradesTable = () => {
                             className="bg-gunmetal-800 border border-gunmetal-700 rounded-lg pl-9 pr-4 py-2 text-xs text-white focus:outline-none focus:border-target/50 transition-colors w-full sm:w-48"
                         />
                     </div>
+
+                    <button
+                        onClick={handleExportCSV}
+                        className="flex items-center gap-1.5 bg-target/10 hover:bg-target/20 text-target border border-target/20 px-3 py-1.5 rounded-lg transition-colors text-xs font-bold"
+                        title="Export All Trades to CSV"
+                    >
+                        <Download className="w-4 h-4" />
+                        <span>Export CSV</span>
+                    </button>
                 </div>
             </div>
 
