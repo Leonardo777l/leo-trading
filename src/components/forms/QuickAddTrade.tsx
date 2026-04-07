@@ -26,7 +26,7 @@ export const QuickAddTrade = ({ isOpen, onClose }: QuickAddTradeProps) => {
     const [estadoMental, setEstadoMental] = useState<EstadoMental>('Calm');
     const [imageLink, setImageLink] = useState('');
     const [account, setAccount] = useState('PERSONAL');
-    const [instrument, setInstrument] = useState('NQ');
+    const [instrument, setInstrument] = useState('MNQ');
     const [strategy, setStrategy] = useState(selectedStrategy === 'ALL' ? 'Order Flow' : selectedStrategy);
     const [notes, setNotes] = useState('');
     const [isNewAccount, setIsNewAccount] = useState(false);
