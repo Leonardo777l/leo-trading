@@ -17,9 +17,9 @@ export default function Home() {
   const selectedStrategy = useTradeStore(state => state.selectedStrategy);
 
   const activeStrategies = useMemo(() => {
-    const strats = trades.map(t => t.strategy ? t.strategy.trim() : 'ORDER FLOW 1:3');
+    const strats = trades.map(t => t.strategy ? t.strategy.trim() : 'Order Flow');
     const unique = Array.from(new Set(strats));
-    if (!unique.includes('ORDER FLOW 1:3')) unique.push('ORDER FLOW 1:3');
+    if (!unique.includes('Order Flow')) unique.push('Order Flow');
     return unique.sort();
   }, [trades]);
 

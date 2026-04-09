@@ -1,4 +1,4 @@
-export const reseedData = [
+[
   {
     "date": "2025-12-02 12:00",
     "direction": "Long",
@@ -6003,4 +6003,4 @@ export const reseedData = [
     "strategy": "ORDER FLOW 1:1.5",
     "notes": "\"\""
   }
-];
+]

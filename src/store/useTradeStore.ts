@@ -38,8 +38,6 @@ interface TradeState {
     signOut: () => Promise<void>;
     setUser: (user: User | null) => void;
     setSelectedStrategy: (strategy: string) => void;
-    migrateOrderFlowTrades: (candidates: Trade[]) => Promise<void>;
-    cleanupDuplicates: (trades: Trade[]) => Promise<void>;
     heavyReseed: (trades: Omit<Trade, 'id'>[]) => Promise<void>;
 }
 
@@ -92,7 +90,7 @@ export const useTradeStore = create<TradeState>((set, get) => ({
     user: null,
     isLoading: false,
     fetchTrades: async () => {
-        const { user, migrateOrderFlowTrades, cleanupDuplicates } = get();
+        const { user } = get();
         if (!user) return;
 
         set({ isLoading: true });
@@ -103,122 +101,11 @@ export const useTradeStore = create<TradeState>((set, get) => ({
             .order('date', { ascending: true });
             
         if (!error && data) {
-            const currentTrades = data as Trade[];
-            set({ trades: currentTrades });
-            
-            // Check for unmigrated trades
-            const unmigrated = currentTrades.filter(t => 
-                !t.strategy || 
-                t.strategy.trim().toLowerCase() === 'order flow' || 
-                t.strategy.trim() === 'Order Flow'
-            );
-
-            // Check for duplicates (common after the bug)
-            const hasPossibleDuplicates = currentTrades.length > 300; // Heuristic: user said 190 was normal, 1000 is bad.
-
-            if (unmigrated.length > 0) {
-                console.log('Old Order Flow trades detected, triggering migration once...');
-                await migrateOrderFlowTrades(unmigrated);
-                await get().fetchTrades(); // Refresh once after migration
-                return;
-            }
-
-            if (hasPossibleDuplicates) {
-                console.log('Checking for duplicates...');
-                await cleanupDuplicates(currentTrades);
-                // fetchTrades will be called inside cleanup if deletions happen
-                return;
-            }
-
-            // Cleanup specific unwanted legacy strategies as requested
-            const badTrades = currentTrades.filter(t => {
-                const s = t.strategy?.toLowerCase() || '';
-                return s.includes('liquidez') || s.includes('scalp');
-            });
-            if (badTrades.length > 0) {
-                console.log('Deleting legacy strategies (liquidez, hard scalping)...');
-                await Promise.all(badTrades.map(bt => supabase.from('trades').delete().eq('id', bt.id)));
-                await get().fetchTrades();
-                return;
-            }
-
+            set({ trades: data as Trade[] });
         } else if (error) {
             console.error('Failed to fetch trades:', error);
         }
         set({ isLoading: false });
-    },
-    migrateOrderFlowTrades: async (candidates: Trade[]) => {
-        const { user } = get();
-        if (!user || candidates.length === 0) return;
-
-        console.log(`Migrating ${candidates.length} trades...`);
-        for (const trade of candidates) {
-            // Update original to 1:3
-            await supabase.from('trades').update({ strategy: 'ORDER FLOW 1:3' }).eq('id', trade.id);
-
-            // Clone to 1:1.5
-            let newOutcome = trade.outcome;
-            if (trade.outcome === 'BE' || trade.outcome === 'TP') {
-                newOutcome = 'TP';
-            }
-            
-            const newTicksTarget = trade.ticksTarget > 0 ? trade.ticksTarget / 2 : 0;
-            const newNetProfit = calculateNetProfit(newOutcome, newTicksTarget, trade.stopTicks, trade.contracts, trade.instrument);
-
-            // eslint-disable-next-line @typescript-eslint/no-unused-vars
-            const { id, ...tradeWithoutId } = trade;
-            await supabase.from('trades').insert([{
-                ...tradeWithoutId,
-                strategy: 'ORDER FLOW 1:1.5',
-                outcome: newOutcome,
-                ticksTarget: newTicksTarget,
-                netProfit: newNetProfit,
-                user_id: user.id
-            }]);
-        }
-    },
-    cleanupDuplicates: async (trades: Trade[]) => {
-        const { user } = get();
-        if (!user || trades.length === 0) return;
-
-        const groups = new Map<string, Trade[]>();
-        trades.forEach(t => {
-            // Uniqueness key: normalized date + instrument + contracts + notes
-            const d = new Date(t.date).getTime();
-            const key = `${d}_${t.instrument}_${t.contracts}_${(t.notes || '').trim()}`;
-            if (!groups.has(key)) groups.set(key, []);
-            groups.get(key)!.push(t);
-        });
-
-        const idsToDelete: string[] = [];
-        let duplicateCount = 0;
-
-        groups.forEach((groupTrades) => {
-            const variant1p5 = groupTrades.filter(t => t.strategy === 'ORDER FLOW 1:1.5');
-            const variant1p3 = groupTrades.filter(t => t.strategy === 'ORDER FLOW 1:3');
-
-            // We only care about groups that have more than 1 clone of the same variant
-            if (variant1p5.length > 1) {
-                // Keep the first one, delete the rest
-                variant1p5.slice(1).forEach(t => idsToDelete.push(t.id));
-                duplicateCount += (variant1p5.length - 1);
-            }
-            if (variant1p3.length > 1) {
-                variant1p3.slice(1).forEach(t => idsToDelete.push(t.id));
-                duplicateCount += (variant1p3.length - 1);
-            }
-        });
-
-        if (idsToDelete.length > 0) {
-            console.log(`Cleanup: Found ${duplicateCount} duplicate variants. Deleting...`);
-            // Batch delete
-            for (let i = 0; i < idsToDelete.length; i += 50) {
-                const batch = idsToDelete.slice(i, i + 50);
-                await supabase.from('trades').delete().in('id', batch);
-            }
-            console.log('Cleanup complete.');
-            await get().fetchTrades();
-        }
     },
     heavyReseed: async (tradesInput) => {
         const { user } = get();
@@ -252,7 +139,7 @@ export const useTradeStore = create<TradeState>((set, get) => ({
         if (!user) return;
 
         const netProfit = calculateNetProfit(tradeInput.outcome, tradeInput.ticksTarget, tradeInput.stopTicks, tradeInput.contracts, tradeInput.instrument);
-        const resolvedStrategy = tradeInput.strategy ? tradeInput.strategy.trim().toUpperCase() : 'ORDER FLOW 1:3';
+        const resolvedStrategy = tradeInput.strategy ? tradeInput.strategy.trim() : 'Order Flow';
             
         const newTrade = {
             ...tradeInput,
@@ -264,30 +151,7 @@ export const useTradeStore = create<TradeState>((set, get) => ({
 
         const { data, error } = await supabase.from('trades').insert([newTrade]).select().single();
         if (!error && data) {
-            const tradesToAdd = [data as Trade];
-
-            // AUTO GENERATE THE 1:1.5 VARIANT WHEN "ORDER FLOW 1:3" is executed
-            if (resolvedStrategy === 'ORDER FLOW 1:3') {
-                let newOutcome = tradeInput.outcome;
-                if (tradeInput.outcome === 'BE' || tradeInput.outcome === 'TP') newOutcome = 'TP';
-                const newTicksTarget = tradeInput.ticksTarget > 0 ? tradeInput.ticksTarget / 2 : 0;
-                const clonedNetProfit = calculateNetProfit(newOutcome, newTicksTarget, tradeInput.stopTicks, tradeInput.contracts, tradeInput.instrument);
-
-                const clonedInput = {
-                    ...newTrade,
-                    strategy: 'ORDER FLOW 1:1.5',
-                    outcome: newOutcome,
-                    ticksTarget: newTicksTarget,
-                    netProfit: clonedNetProfit
-                };
-
-                const { data: clonedData, error: clonedError } = await supabase.from('trades').insert([clonedInput]).select().single();
-                if (!clonedError && clonedData) {
-                    tradesToAdd.push(clonedData as Trade);
-                }
-            }
-
-            set((state) => ({ trades: [...state.trades, ...tradesToAdd] }));
+            set((state) => ({ trades: [...state.trades, data as Trade] }));
         } else {
             console.error('Failed to add trade:', error);
             throw error;
@@ -301,7 +165,7 @@ export const useTradeStore = create<TradeState>((set, get) => ({
             ...t,
             account: t.account?.trim().toUpperCase() || 'PERSONAL',
             netProfit: calculateNetProfit(t.outcome, t.ticksTarget, t.stopTicks, t.contracts, t.instrument),
-            strategy: t.strategy ? t.strategy.trim() : 'ORDER FLOW 1:3',
+            strategy: t.strategy ? t.strategy.trim() : 'Order Flow',
             user_id: user.id
         }));
 
