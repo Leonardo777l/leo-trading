@@ -94,6 +94,26 @@ export const TradesTable = () => {
                 </div>
 
                 <div className="flex flex-wrap items-center gap-3">
+                    <button
+                        onClick={async () => {
+                            if (confirm('This will DELETE all current trades and re-initialize from the TRADES TOTALES.csv backup. Are you SURE?')) {
+                                try {
+                                    // @ts-expect-error - reseedData has no id as required by heavyReseed
+                                    await heavyReseed(reseedData);
+                                    alert('Database reseeded successfully!');
+                                } catch (_e) {
+                                    alert('Error seeding database. Check console.');
+                                }
+                            }
+                        }}
+                        disabled={isLoading}
+                        className="flex items-center gap-1.5 bg-orange-500 hover:bg-orange-600 text-white px-4 py-2 rounded-lg transition-all text-xs font-bold shadow-lg shadow-orange-500/20 disabled:opacity-50 animate-pulse"
+                        title="Reseed from Backup CSV"
+                    >
+                        <Database className="w-4 h-4" />
+                        <span>{isLoading ? 'Reseeding...' : 'FORZAR RESEED (BACKUP)'}</span>
+                    </button>
+
                     <div className="flex items-center gap-2 bg-gunmetal-800 border border-gunmetal-700 rounded-lg p-1.5">
                         <Filter className="w-4 h-4 text-gray-400 ml-1" />
                         <select
@@ -138,26 +158,6 @@ export const TradesTable = () => {
                     >
                         <Download className="w-4 h-4" />
                         <span>Export CSV</span>
-                    </button>
-
-                    <button
-                        onClick={async () => {
-                            if (confirm('This will DELETE all current trades and re-initialize from the TRADES TOTALES.csv backup. Are you SURE?')) {
-                                try {
-                                    // @ts-expect-error - reseedData has no id as required by heavyReseed
-                                    await heavyReseed(reseedData);
-                                    alert('Database reseeded successfully!');
-                                } catch (_e) {
-                                    alert('Error seeding database. Check console.');
-                                }
-                            }
-                        }}
-                        disabled={isLoading}
-                        className="flex items-center gap-1.5 bg-orange-500/10 hover:bg-orange-500/20 text-orange-500 border border-orange-500/20 px-3 py-1.5 rounded-lg transition-colors text-xs font-bold disabled:opacity-50"
-                        title="Reseed from Backup CSV"
-                    >
-                        <Database className="w-4 h-4" />
-                        <span>{isLoading ? 'Reseeding...' : 'Reseed from Backup'}</span>
                     </button>
                 </div>
             </div>
