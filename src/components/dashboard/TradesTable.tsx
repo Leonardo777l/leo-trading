@@ -101,7 +101,7 @@ export const TradesTable = () => {
                                     // @ts-expect-error - reseedData has no id as required by heavyReseed
                                     await heavyReseed(reseedData);
                                     alert('Database reseeded successfully!');
-                                } catch (_e) {
+                                } catch {
                                     alert('Error seeding database. Check console.');
                                 }
                             }
