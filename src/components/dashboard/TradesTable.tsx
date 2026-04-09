@@ -4,12 +4,15 @@ import { useState } from 'react';
 import { useActiveTrades, useTradeStore } from '@/store/useTradeStore';
 import { Card } from '@/components/ui/Card';
 import { format } from 'date-fns';
-import { Search, Activity, ExternalLink, Filter, Download } from 'lucide-react';
+import { Search, Activity, ExternalLink, Filter, Download, Database } from 'lucide-react';
+import { reseedData } from '@/data/reseedData';
 
 export const TradesTable = () => {
     const trades = useActiveTrades();
     const removeTrade = useTradeStore(state => state.removeTrade);
     const selectedStrategy = useTradeStore(state => state.selectedStrategy);
+    const heavyReseed = useTradeStore(state => state.heavyReseed);
+    const isLoading = useTradeStore(state => state.isLoading);
 
     const [searchTerm, setSearchTerm] = useState('');
     const [filterOutcome, setFilterOutcome] = useState('All');
@@ -135,6 +138,26 @@ export const TradesTable = () => {
                     >
                         <Download className="w-4 h-4" />
                         <span>Export CSV</span>
+                    </button>
+
+                    <button
+                        onClick={async () => {
+                            if (confirm('This will DELETE all current trades and re-initialize from the TRADES TOTALES.csv backup. Are you SURE?')) {
+                                try {
+                                    // @ts-ignore - reseedData has no id as required by heavyReseed
+                                    await heavyReseed(reseedData);
+                                    alert('Database reseeded successfully!');
+                                } catch (e) {
+                                    alert('Error seeding database. Check console.');
+                                }
+                            }
+                        }}
+                        disabled={isLoading}
+                        className="flex items-center gap-1.5 bg-orange-500/10 hover:bg-orange-500/20 text-orange-500 border border-orange-500/20 px-3 py-1.5 rounded-lg transition-colors text-xs font-bold disabled:opacity-50"
+                        title="Reseed from Backup CSV"
+                    >
+                        <Database className="w-4 h-4" />
+                        <span>{isLoading ? 'Reseeding...' : 'Reseed from Backup'}</span>
                     </button>
                 </div>
             </div>
