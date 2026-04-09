@@ -108,16 +108,16 @@ export const useTradeStore = create<TradeState>((set, get) => ({
         set({ isLoading: false });
     },
     heavyReseed: async (tradesInput) => {
-        const { user } = get();
-        if (!user) return;
+        const { user, selectedStrategy } = get();
+        if (!user || selectedStrategy === 'ALL') return;
 
         set({ isLoading: true });
-        console.log('STARTING HEAVY RESEED: Deleting ALL trades...');
+        console.log(`STARTING HEAVY RESEED for ${selectedStrategy}: Deleting existing trades for this strategy...`);
         
-        // 1. Delete all
-        const { error: delError } = await supabase.from('trades').delete().eq('user_id', user.id);
+        // 1. Delete ONLY trades of the current workspace
+        const { error: delError } = await supabase.from('trades').delete().eq('user_id', user.id).eq('strategy', selectedStrategy);
         if (delError) {
-            console.error('Failed to clear trades:', delError);
+            console.error('Failed to clear trades for this strategy:', delError);
             set({ isLoading: false });
             return;
         }
@@ -125,7 +125,11 @@ export const useTradeStore = create<TradeState>((set, get) => ({
         console.log(`Inserting ${tradesInput.length} new trades...`);
         // 2. Batch Insert
         for (let i = 0; i < tradesInput.length; i += 50) {
-            const batch = tradesInput.slice(i, i + 50).map(t => ({ ...t, user_id: user.id }));
+            const batch = tradesInput.slice(i, i + 50).map(t => ({ 
+                ...t, 
+                user_id: user.id,
+                strategy: selectedStrategy // Ensure they stay in the right workspace
+            }));
             const { error: insError } = await supabase.from('trades').insert(batch);
             if (insError) console.error(`Failed to insert batch ${i}:`, insError);
         }

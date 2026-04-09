@@ -10,6 +10,7 @@ export const TradesTable = () => {
     const trades = useActiveTrades();
     const removeTrade = useTradeStore(state => state.removeTrade);
     const selectedStrategy = useTradeStore(state => state.selectedStrategy);
+    const heavyReseed = useTradeStore(state => state.heavyReseed);
 
     const [searchTerm, setSearchTerm] = useState('');
     const [filterOutcome, setFilterOutcome] = useState('All');
@@ -91,6 +92,27 @@ export const TradesTable = () => {
                 </div>
 
                 <div className="flex flex-wrap items-center gap-3">
+                    {selectedStrategy === 'ORDER FLOW 1.5' && (
+                        <button
+                            onClick={async () => {
+                                if (confirm('¿Restaurar los 190 trades transformados de ORDER FLOW 1.5?')) {
+                                    try {
+                                        const response = await fetch('/orderFlow1_5Data.json');
+                                        if (!response.ok) throw new Error('Could not load backup data');
+                                        const data = await response.json();
+                                        await heavyReseed(data);
+                                        alert('Workspace ORDER FLOW 1.5 inicializado con éxito!');
+                                    } catch {
+                                        alert('Error al restaurar. Revisa la consola.');
+                                    }
+                                }
+                            }}
+                            className="flex items-center gap-1.5 bg-purple-600 hover:bg-purple-700 text-white px-4 py-2 rounded-lg transition-all text-xs font-bold shadow-lg shadow-purple-500/20"
+                        >
+                            <Activity className="w-4 h-4" />
+                            <span>Restaurar Backup 1.5</span>
+                        </button>
+                    )}
 
                     <div className="flex items-center gap-2 bg-gunmetal-800 border border-gunmetal-700 rounded-lg p-1.5">
                         <Filter className="w-4 h-4 text-gray-400 ml-1" />

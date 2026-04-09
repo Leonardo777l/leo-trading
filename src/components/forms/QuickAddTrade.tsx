@@ -48,7 +48,6 @@ export const QuickAddTrade = ({ isOpen, onClose }: QuickAddTradeProps) => {
 
     const getInstrumentInfo = (inst: string) => {
         switch (inst.toUpperCase()) {
-            case 'NQ': return { tickValue: 5.00, comm: 4.10, ticksPerPoint: 4 };
             case 'ES': return { tickValue: 12.50, comm: 4.10, ticksPerPoint: 4 };
             case 'MES': return { tickValue: 1.25, comm: 1.20, ticksPerPoint: 4 };
             case 'CL': return { tickValue: 10.00, comm: 4.50, ticksPerPoint: 100 }; 
@@ -313,7 +312,6 @@ export const QuickAddTrade = ({ isOpen, onClose }: QuickAddTradeProps) => {
                                             onChange={(e) => setInstrument(e.target.value)}
                                             className="bg-gunmetal-800 border border-gunmetal-700 rounded-lg px-3 py-2 text-sm text-white focus:outline-none focus:border-target/50 transition-colors appearance-none cursor-pointer"
                                         >
-                                            <option value="NQ">NQ (Nasdaq)</option>
                                             <option value="MNQ">MNQ (Micro Nasdaq)</option>
                                             <option value="ES">ES (S&P 500)</option>
                                             <option value="MES">MES (Micro S&P)</option>
