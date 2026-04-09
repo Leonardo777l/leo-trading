@@ -4,14 +4,12 @@ import { useState } from 'react';
 import { useActiveTrades, useTradeStore } from '@/store/useTradeStore';
 import { Card } from '@/components/ui/Card';
 import { format } from 'date-fns';
-import { Search, Activity, ExternalLink, Filter, Download, Database } from 'lucide-react';
+import { Search, Activity, ExternalLink, Filter, Download } from 'lucide-react';
 
 export const TradesTable = () => {
     const trades = useActiveTrades();
     const removeTrade = useTradeStore(state => state.removeTrade);
     const selectedStrategy = useTradeStore(state => state.selectedStrategy);
-    const heavyReseed = useTradeStore(state => state.heavyReseed);
-    const isLoading = useTradeStore(state => state.isLoading);
 
     const [searchTerm, setSearchTerm] = useState('');
     const [filterOutcome, setFilterOutcome] = useState('All');

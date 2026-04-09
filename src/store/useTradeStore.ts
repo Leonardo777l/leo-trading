@@ -86,7 +86,7 @@ const calculateNetProfit = (outcome: Outcome, ticks: number, stop: number, contr
 
 export const useTradeStore = create<TradeState>((set, get) => ({
     trades: [],
-    selectedStrategy: 'ALL',
+    selectedStrategy: 'Order Flow', // Default Database
     user: null,
     isLoading: false,
     fetchTrades: async () => {
@@ -139,7 +139,7 @@ export const useTradeStore = create<TradeState>((set, get) => ({
         if (!user) return;
 
         const netProfit = calculateNetProfit(tradeInput.outcome, tradeInput.ticksTarget, tradeInput.stopTicks, tradeInput.contracts, tradeInput.instrument);
-        const resolvedStrategy = tradeInput.strategy ? tradeInput.strategy.trim() : 'Order Flow';
+        const resolvedStrategy = tradeInput.strategy ? tradeInput.strategy.trim() : get().selectedStrategy;
             
         const newTrade = {
             ...tradeInput,
@@ -165,7 +165,7 @@ export const useTradeStore = create<TradeState>((set, get) => ({
             ...t,
             account: t.account?.trim().toUpperCase() || 'PERSONAL',
             netProfit: calculateNetProfit(t.outcome, t.ticksTarget, t.stopTicks, t.contracts, t.instrument),
-            strategy: t.strategy ? t.strategy.trim() : 'Order Flow',
+            strategy: t.strategy ? t.strategy.trim() : get().selectedStrategy,
             user_id: user.id
         }));
 
@@ -217,6 +217,7 @@ export const useActiveTrades = () => {
     const selectedStrategy = useTradeStore(state => state.selectedStrategy);
     
     return useMemo(() => {
+        // If 'ALL' is chosen, show everything, otherwise isolate strictly
         if (selectedStrategy === 'ALL') return trades;
         return trades.filter(t => (t.strategy || 'Order Flow') === selectedStrategy);
     }, [trades, selectedStrategy]);

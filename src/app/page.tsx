@@ -1,6 +1,6 @@
 'use client';
 
-import { useMemo, useState } from 'react';
+import { useState } from 'react';
 import { useTradeStore } from '@/store/useTradeStore';
 import { DashboardLayout } from '@/components/layout/DashboardLayout';
 import { StatsOverview } from '@/components/dashboard/StatsOverview';
@@ -13,15 +13,8 @@ import { QuickAddTrade } from '@/components/forms/QuickAddTrade';
 
 export default function Home() {
   const [isQuickAddOpen, setIsQuickAddOpen] = useState(false);
-  const trades = useTradeStore(state => state.trades);
   const selectedStrategy = useTradeStore(state => state.selectedStrategy);
 
-  const activeStrategies = useMemo(() => {
-    const strats = trades.map(t => t.strategy ? t.strategy.trim() : 'Order Flow');
-    const unique = Array.from(new Set(strats));
-    if (!unique.includes('Order Flow')) unique.push('Order Flow');
-    return unique.sort();
-  }, [trades]);
 
   return (
     <>
@@ -40,17 +33,8 @@ export default function Home() {
             </div>
             <div className="flex items-center gap-4">
               <div className="flex items-center gap-2 bg-gunmetal-900 border border-gunmetal-700 px-3 py-1.5 rounded-full">
-                <span className="text-[10px] font-bold text-gray-400 uppercase tracking-wider">STRATEGY / VARIANT:</span>
-                <select
-                  value={selectedStrategy}
-                  onChange={(e) => useTradeStore.getState().setSelectedStrategy(e.target.value)}
-                  className="bg-transparent text-[11px] font-bold text-target focus:outline-none cursor-pointer appearance-none"
-                >
-                  <option value="ALL">ALL STRATEGIES</option>
-                  {activeStrategies.map(strat => (
-                    <option key={strat} value={strat}>{strat.toUpperCase()}</option>
-                  ))}
-                </select>
+                <span className="text-[10px] font-black text-gray-400 uppercase tracking-widest">ACTIVE DATABASE:</span>
+                <span className="text-[11px] font-black text-target uppercase tracking-wider">{selectedStrategy}</span>
               </div>
               
               <div className="flex items-center gap-2 bg-gunmetal-900 border border-gunmetal-700 px-3 py-1.5 rounded-full">
