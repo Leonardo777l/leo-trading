@@ -15,6 +15,7 @@ interface QuickAddTradeProps {
 export const QuickAddTrade = ({ isOpen, onClose }: QuickAddTradeProps) => {
     const addTrade = useTradeStore(state => state.addTrade);
     const selectedStrategy = useTradeStore(state => state.selectedStrategy);
+    const setSelectedStrategy = useTradeStore(state => state.setSelectedStrategy); 
     const trades = useTradeStore(state => state.trades);
 
     const [date, setDate] = useState(format(new Date(), 'yyyy-MM-dd'));
@@ -260,111 +261,121 @@ export const QuickAddTrade = ({ isOpen, onClose }: QuickAddTradeProps) => {
                                     </div>
                                 </div>
 
-                                <div className="grid grid-cols-2 gap-4">
-                                    <div className="flex flex-col gap-1.5">
-                                        <label className="text-xs text-gray-400 font-medium uppercase tracking-wider">Account</label>
-                                        {isNewAccount ? (
-                                            <div className="flex gap-2">
-                                                <input
-                                                    type="text"
-                                                    placeholder="NEW ACCOUNT"
-                                                    value={account}
-                                                    onChange={(e) => setAccount(e.target.value.toUpperCase())}
-                                                    className="w-full bg-gunmetal-800 border border-gunmetal-700 rounded-lg px-3 py-2 text-sm text-white focus:outline-none focus:border-target/50 transition-colors uppercase"
-                                                    autoFocus
-                                                />
-                                                <button
-                                                    type="button"
-                                                    onClick={() => {
-                                                        setIsNewAccount(false);
-                                                        setAccount(activeAccounts[0] || 'PERSONAL');
+                                    <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                                        {/* Account Section */}
+                                        <div className="flex flex-col gap-1.5 text-left">
+                                            <label className="text-[10px] text-gray-400 font-bold uppercase tracking-widest ml-1">Account</label>
+                                            {isNewAccount ? (
+                                                <div className="flex gap-2">
+                                                    <input
+                                                        type="text"
+                                                        placeholder="NEW ACCOUNT"
+                                                        value={account}
+                                                        onChange={(e) => setAccount(e.target.value.toUpperCase())}
+                                                        className="w-full bg-gunmetal-800 border border-gunmetal-700 rounded-lg px-3 py-2 text-sm text-white focus:outline-none focus:border-target/50 transition-colors uppercase"
+                                                        autoFocus
+                                                    />
+                                                    <button
+                                                        type="button"
+                                                        onClick={() => {
+                                                            setIsNewAccount(false);
+                                                            setAccount(activeAccounts[0] || 'PERSONAL');
+                                                        }}
+                                                        className="px-3 bg-gunmetal-800 border border-gunmetal-700 hover:bg-gunmetal-700 rounded-lg text-gray-400 transition-colors flex items-center justify-center shrink-0"
+                                                    >
+                                                        <X className="w-4 h-4" />
+                                                    </button>
+                                                </div>
+                                            ) : (
+                                                <select
+                                                    value={activeAccounts.includes(account) ? account : (activeAccounts[0] || 'PERSONAL')}
+                                                    onChange={(e) => {
+                                                        if (e.target.value === 'NEW') {
+                                                            setAccount('');
+                                                            setIsNewAccount(true);
+                                                        } else {
+                                                            setAccount(e.target.value);
+                                                        }
                                                     }}
-                                                    className="px-3 bg-gunmetal-800 border border-gunmetal-700 hover:bg-gunmetal-700 rounded-lg text-gray-400 transition-colors flex items-center justify-center shrink-0"
-                                                    title="Cancel New Account"
+                                                    className="bg-gunmetal-800 border border-gunmetal-700 rounded-lg px-3 py-2 text-sm text-white focus:outline-none focus:border-target/50 transition-colors cursor-pointer uppercase"
                                                 >
-                                                    <X className="w-4 h-4" />
-                                                </button>
-                                            </div>
-                                        ) : (
+                                                    {activeAccounts.map(acc => (
+                                                        <option key={acc} value={acc}>{acc}</option>
+                                                    ))}
+                                                    <option value="NEW">+ ADD NEW ACCOUNT</option>
+                                                </select>
+                                            )}
+                                        </div>
+
+                                        {/* Instrument Section */}
+                                        <div className="flex flex-col gap-1.5 text-left">
+                                            <label className="text-[10px] text-gray-400 font-bold uppercase tracking-widest ml-1">Instrument</label>
                                             <select
-                                                value={activeAccounts.includes(account) ? account : (account ? 'NEW' : activeAccounts[0] || 'PERSONAL')}
-                                                onChange={(e) => {
-                                                    if (e.target.value === 'NEW') {
-                                                        setAccount('');
-                                                        setIsNewAccount(true);
-                                                    } else {
-                                                        setAccount(e.target.value);
-                                                    }
-                                                }}
-                                                className="bg-gunmetal-800 border border-gunmetal-700 rounded-lg px-3 py-2 text-sm text-white focus:outline-none focus:border-target/50 transition-colors appearance-none cursor-pointer uppercase"
+                                                value={instrument}
+                                                onChange={(e) => setInstrument(e.target.value)}
+                                                className="bg-gunmetal-800 border border-gunmetal-700 rounded-lg px-3 py-2 text-sm text-white focus:outline-none focus:border-target/50 transition-colors cursor-pointer"
                                             >
-                                                {activeAccounts.map(acc => (
-                                                    <option key={acc} value={acc}>{acc}</option>
-                                                ))}
-                                                <option value="NEW">+ Add New Account</option>
+                                                <option value="MNQ">MNQ (Micro Nasdaq)</option>
+                                                <option value="ES">ES (S&P 500)</option>
+                                                <option value="MES">MES (Micro S&P)</option>
+                                                <option value="CL">CL (Crude Oil)</option>
+                                                <option value="GC">GC (Gold)</option>
+                                                <option value="OTHER">Other</option>
                                             </select>
-                                        )}
-                                    </div>
-                                    <div className="flex flex-col gap-1.5">
-                                        <label className="text-xs text-gray-400 font-medium uppercase tracking-wider">Instrument</label>
-                                        <select
-                                            value={instrument}
-                                            onChange={(e) => setInstrument(e.target.value)}
-                                            className="bg-gunmetal-800 border border-gunmetal-700 rounded-lg px-3 py-2 text-sm text-white focus:outline-none focus:border-target/50 transition-colors appearance-none cursor-pointer"
-                                        >
-                                            <option value="MNQ">MNQ (Micro Nasdaq)</option>
-                                            <option value="ES">ES (S&P 500)</option>
-                                            <option value="MES">MES (Micro S&P)</option>
-                                            <option value="CL">CL (Crude Oil)</option>
-                                            <option value="GC">GC (Gold)</option>
-                                            <option value="OTHER">Other</option>
-                                        </select>
-                                    </div>
-                                    <div className="flex flex-col gap-1.5">
-                                        <label className="text-xs text-gray-400 font-medium uppercase tracking-wider">Strategy</label>
-                                        {isNewStrategy ? (
-                                            <div className="flex gap-2">
-                                                <input
-                                                    type="text"
-                                                    placeholder="NEW VARIANT / STRATEGY"
-                                                    value={strategy}
-                                                    onChange={(e) => setStrategy(e.target.value.toUpperCase())}
-                                                    className="w-full bg-gunmetal-800 border border-gunmetal-700 rounded-lg px-3 py-2 text-sm text-white focus:outline-none focus:border-target/50 transition-colors"
-                                                    autoFocus
-                                                />
-                                                <button
-                                                    type="button"
-                                                    onClick={() => {
-                                                        setIsNewStrategy(false);
-                                                        setStrategy(activeStrategies[0] || 'Order Flow');
+                                        </div>
+
+                                        {/* Strategy Section - Independent Workspaces */}
+                                        <div className="flex flex-col gap-1.5 text-left">
+                                            <label className="text-[10px] text-gray-400 font-bold uppercase tracking-widest ml-1">Strategy / Workspace</label>
+                                            {isNewStrategy ? (
+                                                <div className="flex gap-2">
+                                                    <input
+                                                        type="text"
+                                                        placeholder="NEW WORKSPACE NAME"
+                                                        value={strategy}
+                                                        onChange={(e) => {
+                                                            const val = e.target.value.toUpperCase();
+                                                            setStrategy(val);
+                                                            // Link it to global workspace selection
+                                                            setSelectedStrategy(val);
+                                                        }}
+                                                        className="w-full bg-target/5 border border-target/30 rounded-lg px-3 py-2 text-sm text-white focus:outline-none focus:border-target/50 transition-colors font-bold"
+                                                        autoFocus
+                                                    />
+                                                    <button
+                                                        type="button"
+                                                        onClick={() => {
+                                                            setIsNewStrategy(false);
+                                                            const prev = selectedStrategy === 'ALL' ? 'Order Flow' : selectedStrategy;
+                                                            setStrategy(prev);
+                                                        }}
+                                                        className="px-3 bg-gunmetal-800 border border-gunmetal-700 hover:bg-gunmetal-700 rounded-lg text-gray-400 transition-colors flex items-center justify-center shrink-0"
+                                                    >
+                                                        <X className="w-4 h-4" />
+                                                    </button>
+                                                </div>
+                                            ) : (
+                                                <select
+                                                    value={activeStrategies.includes(strategy) ? strategy : 'Order Flow'}
+                                                    onChange={(e) => {
+                                                        if (e.target.value === 'NEW') {
+                                                            setStrategy('');
+                                                            setIsNewStrategy(true);
+                                                        } else {
+                                                            setStrategy(e.target.value);
+                                                            setSelectedStrategy(e.target.value);
+                                                        }
                                                     }}
-                                                    className="px-3 bg-gunmetal-800 border border-gunmetal-700 hover:bg-gunmetal-700 rounded-lg text-gray-400 transition-colors flex items-center justify-center shrink-0"
-                                                    title="Cancel New Strategy"
+                                                    className={`bg-gunmetal-800 border border-gunmetal-700 rounded-lg px-3 py-2 text-sm focus:outline-none focus:border-target/50 transition-colors cursor-pointer font-bold ${strategy === 'ORDER FLOW 1.5' || strategy === 'RR NEGATIVO' ? 'text-target' : 'text-white'}`}
                                                 >
-                                                    <X className="w-4 h-4" />
-                                                </button>
-                                            </div>
-                                        ) : (
-                                            <select
-                                                value={activeStrategies.includes(strategy) ? strategy : (strategy ? 'NEW' : activeStrategies[0] || 'Order Flow')}
-                                                onChange={(e) => {
-                                                    if (e.target.value === 'NEW') {
-                                                        setStrategy('');
-                                                        setIsNewStrategy(true);
-                                                    } else {
-                                                        setStrategy(e.target.value);
-                                                    }
-                                                }}
-                                                className="bg-gunmetal-800 border border-gunmetal-700 rounded-lg px-3 py-2 text-sm text-white focus:outline-none focus:border-target/50 transition-colors appearance-none cursor-pointer"
-                                            >
-                                                {activeStrategies.map(strat => (
-                                                    <option key={strat} value={strat}>{strat.toUpperCase()}</option>
-                                                ))}
-                                                <option value="NEW">+ Add New Variant</option>
-                                            </select>
-                                        )}
+                                                    {activeStrategies.map(strat => (
+                                                        <option key={strat} value={strat}>{strat.toUpperCase()}</option>
+                                                    ))}
+                                                    <option value="NEW" className="text-target font-black">+ CREATE NEW WORKSPACE</option>
+                                                </select>
+                                            )}
+                                        </div>
                                     </div>
-                                </div>
 
                                 <div className="flex flex-col gap-1.5">
                                     <label className="text-xs text-gray-400 font-medium uppercase tracking-wider">Image / Link (Optional)</label>
