@@ -147,7 +147,8 @@ export const useTradeStore = create<TradeState>((set, get) => ({
             const newTicksTarget = trade.ticksTarget > 0 ? trade.ticksTarget / 2 : 0;
             const newNetProfit = calculateNetProfit(newOutcome, newTicksTarget, trade.stopTicks, trade.contracts, trade.instrument);
 
-            const { id, ...tradeWithoutId } = trade;
+            // eslint-disable-next-line @typescript-eslint/no-unused-vars
+            const { id: _ignoreId, ...tradeWithoutId } = trade;
             await supabase.from('trades').insert([{
                 ...tradeWithoutId,
                 strategy: 'ORDER FLOW 1:1.5',
@@ -174,7 +175,7 @@ export const useTradeStore = create<TradeState>((set, get) => ({
 
         const { data, error } = await supabase.from('trades').insert([newTrade]).select().single();
         if (!error && data) {
-            let tradesToAdd = [data as Trade];
+            const tradesToAdd = [data as Trade];
 
             // AUTO GENERATE THE 1:1.5 VARIANT WHEN "ORDER FLOW 1:3" is executed
             if (resolvedStrategy === 'ORDER FLOW 1:3') {

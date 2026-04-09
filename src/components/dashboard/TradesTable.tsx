@@ -8,7 +8,6 @@ import { Search, Activity, ExternalLink, Filter, Download } from 'lucide-react';
 
 export const TradesTable = () => {
     const trades = useActiveTrades();
-    const allTrades = useTradeStore(state => state.trades);
     const removeTrade = useTradeStore(state => state.removeTrade);
     const selectedStrategy = useTradeStore(state => state.selectedStrategy);
 
