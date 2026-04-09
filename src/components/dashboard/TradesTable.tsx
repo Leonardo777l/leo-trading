@@ -144,10 +144,10 @@ export const TradesTable = () => {
                         onClick={async () => {
                             if (confirm('This will DELETE all current trades and re-initialize from the TRADES TOTALES.csv backup. Are you SURE?')) {
                                 try {
-                                    // @ts-ignore - reseedData has no id as required by heavyReseed
+                                    // @ts-expect-error - reseedData has no id as required by heavyReseed
                                     await heavyReseed(reseedData);
                                     alert('Database reseeded successfully!');
-                                } catch (e) {
+                                } catch (_e) {
                                     alert('Error seeding database. Check console.');
                                 }
                             }

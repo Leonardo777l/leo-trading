@@ -165,7 +165,8 @@ export const useTradeStore = create<TradeState>((set, get) => ({
             const newTicksTarget = trade.ticksTarget > 0 ? trade.ticksTarget / 2 : 0;
             const newNetProfit = calculateNetProfit(newOutcome, newTicksTarget, trade.stopTicks, trade.contracts, trade.instrument);
 
-            const { id: _ignoreId, ...tradeWithoutId } = trade;
+            // eslint-disable-next-line @typescript-eslint/no-unused-vars
+            const { id: _, ...tradeWithoutId } = trade;
             await supabase.from('trades').insert([{
                 ...tradeWithoutId,
                 strategy: 'ORDER FLOW 1:1.5',
