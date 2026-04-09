@@ -100,6 +100,28 @@ export const TradesTable = () => {
                         <span>RESTAURAR BACKUP 1.5</span>
                     </button>
                 )}
+
+                {selectedStrategy === 'RR NEGATIVO' && (
+                    <button
+                        onClick={async () => {
+                            if (confirm('¿Restaurar los 153 trades transformados de RR NEGATIVO?')) {
+                                try {
+                                    const response = await fetch('/rrNegativoData.json');
+                                    if (!response.ok) throw new Error('Could not load backup data');
+                                    const data = await response.json();
+                                    await heavyReseed(data);
+                                    alert('Workspace RR NEGATIVO inicializado con éxito!');
+                                } catch {
+                                    alert('Error al restaurar. Revisa la consola.');
+                                }
+                            }
+                        }}
+                        className="flex items-center gap-2 bg-orange-600 hover:bg-orange-700 text-white px-6 py-3 rounded-xl transition-all font-black shadow-xl shadow-orange-500/20 hover:scale-105 active:scale-95"
+                    >
+                        <Activity className="w-5 h-5" />
+                        <span>RESTAURAR RR NEGATIVO</span>
+                    </button>
+                )}
             </Card>
         );
     }
@@ -133,6 +155,28 @@ export const TradesTable = () => {
                         >
                             <Activity className="w-4 h-4" />
                             <span>Restaurar Backup 1.5</span>
+                        </button>
+                    )}
+
+                    {selectedStrategy === 'RR NEGATIVO' && (
+                        <button
+                            onClick={async () => {
+                                if (confirm('¿Restaurar los 153 trades transformados de RR NEGATIVO?')) {
+                                    try {
+                                        const response = await fetch('/rrNegativoData.json');
+                                        if (!response.ok) throw new Error('Could not load backup data');
+                                        const data = await response.json();
+                                        await heavyReseed(data);
+                                        alert('Workspace RR NEGATIVO inicializado con éxito!');
+                                    } catch {
+                                        alert('Error al restaurar. Revisa la consola.');
+                                    }
+                                }
+                            }}
+                            className="flex items-center gap-1.5 bg-orange-600 hover:bg-orange-700 text-white px-4 py-2 rounded-lg transition-all text-xs font-bold shadow-lg shadow-orange-500/20"
+                        >
+                            <Activity className="w-4 h-4" />
+                            <span>Restaurar RR NEGATIVO</span>
                         </button>
                     )}
 

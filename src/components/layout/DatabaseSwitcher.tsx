@@ -21,6 +21,7 @@ export const DatabaseSwitcher = ({ variant = 'sidebar' }: DatabaseSwitcherProps)
         if (!unique.includes('Order Flow')) unique.push('Order Flow');
         // Always show ORDER FLOW 1.5 in the list if it doesn't exist yet to make it easy to find
         if (!unique.includes('ORDER FLOW 1.5')) unique.push('ORDER FLOW 1.5');
+        if (!unique.includes('RR NEGATIVO')) unique.push('RR NEGATIVO');
         return unique.sort();
     }, [trades]);
 
