@@ -74,10 +74,32 @@ export const TradesTable = () => {
 
     if (trades.length === 0) {
         return (
-            <Card className="flex flex-col items-center justify-center text-gray-500 min-h-[400px]">
+            <Card className="flex flex-col items-center justify-center text-gray-500 min-h-[400px] relative">
                 <Activity className="w-12 h-12 mb-4 opacity-20" />
                 <p>No trades logged yet.</p>
-                <p className="text-sm mt-2">Use the Action Button below to add your first trade.</p>
+                <p className="text-sm mt-2 mb-6">Use the Action Button below to add your first trade.</p>
+                
+                {selectedStrategy === 'ORDER FLOW 1.5' && (
+                    <button
+                        onClick={async () => {
+                            if (confirm('¿Restaurar los 190 trades transformados de ORDER FLOW 1.5?')) {
+                                try {
+                                    const response = await fetch('/orderFlow1_5Data.json');
+                                    if (!response.ok) throw new Error('Could not load backup data');
+                                    const data = await response.json();
+                                    await heavyReseed(data);
+                                    alert('Workspace ORDER FLOW 1.5 inicializado con éxito!');
+                                } catch {
+                                    alert('Error al restaurar. Revisa la consola.');
+                                }
+                            }
+                        }}
+                        className="flex items-center gap-2 bg-purple-600 hover:bg-purple-700 text-white px-6 py-3 rounded-xl transition-all font-black shadow-xl shadow-purple-500/20 hover:scale-105 active:scale-95"
+                    >
+                        <Activity className="w-5 h-5" />
+                        <span>RESTAURAR BACKUP 1.5</span>
+                    </button>
+                )}
             </Card>
         );
     }
