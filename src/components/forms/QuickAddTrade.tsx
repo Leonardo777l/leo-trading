@@ -27,7 +27,7 @@ export const QuickAddTrade = ({ isOpen, onClose }: QuickAddTradeProps) => {
     const [imageLink, setImageLink] = useState('');
     const [account, setAccount] = useState('PERSONAL');
     const [instrument, setInstrument] = useState('MNQ');
-    const [strategy, setStrategy] = useState(selectedStrategy === 'ALL' ? 'Order Flow' : selectedStrategy);
+    const [strategy, setStrategy] = useState(selectedStrategy === 'ALL' ? 'ORDER FLOW 1:3' : selectedStrategy);
     const [notes, setNotes] = useState('');
     const [isNewAccount, setIsNewAccount] = useState(false);
     const [isNewStrategy, setIsNewStrategy] = useState(false);
@@ -40,11 +40,9 @@ export const QuickAddTrade = ({ isOpen, onClose }: QuickAddTradeProps) => {
     }, [trades]);
 
     const activeStrategies = useMemo(() => {
-        const strats = trades.map(t => t.strategy ? t.strategy.trim() : 'Order Flow');
+        const strats = trades.map(t => t.strategy ? t.strategy.trim() : 'ORDER FLOW 1:3');
         const unique = Array.from(new Set(strats));
-        if (!unique.includes('Order Flow')) unique.push('Order Flow');
-        if (!unique.includes('Liquidez')) unique.push('Liquidez');
-        if (!unique.includes('HARD CALPING')) unique.push('HARD CALPING');
+        if (!unique.includes('ORDER FLOW 1:3')) unique.push('ORDER FLOW 1:3');
         return unique.sort();
     }, [trades]);
 
@@ -325,14 +323,14 @@ export const QuickAddTrade = ({ isOpen, onClose }: QuickAddTradeProps) => {
                                         </select>
                                     </div>
                                     <div className="flex flex-col gap-1.5">
-                                        <label className="text-xs text-gray-400 font-medium uppercase tracking-wider">Strategy</label>
+                                        <label className="text-xs text-gray-400 font-medium uppercase tracking-wider">Order Flow Variant</label>
                                         {isNewStrategy ? (
                                             <div className="flex gap-2">
                                                 <input
                                                     type="text"
-                                                    placeholder="NEW STRATEGY"
+                                                    placeholder="NEW VARIANT / STRATEGY"
                                                     value={strategy}
-                                                    onChange={(e) => setStrategy(e.target.value)}
+                                                    onChange={(e) => setStrategy(e.target.value.toUpperCase())}
                                                     className="w-full bg-gunmetal-800 border border-gunmetal-700 rounded-lg px-3 py-2 text-sm text-white focus:outline-none focus:border-target/50 transition-colors"
                                                     autoFocus
                                                 />
@@ -340,7 +338,7 @@ export const QuickAddTrade = ({ isOpen, onClose }: QuickAddTradeProps) => {
                                                     type="button"
                                                     onClick={() => {
                                                         setIsNewStrategy(false);
-                                                        setStrategy(activeStrategies[0] || 'Order Flow');
+                                                        setStrategy(activeStrategies[0] || 'ORDER FLOW 1:3');
                                                     }}
                                                     className="px-3 bg-gunmetal-800 border border-gunmetal-700 hover:bg-gunmetal-700 rounded-lg text-gray-400 transition-colors flex items-center justify-center shrink-0"
                                                     title="Cancel New Strategy"
@@ -350,7 +348,7 @@ export const QuickAddTrade = ({ isOpen, onClose }: QuickAddTradeProps) => {
                                             </div>
                                         ) : (
                                             <select
-                                                value={activeStrategies.includes(strategy) ? strategy : (strategy ? 'NEW' : activeStrategies[0] || 'Order Flow')}
+                                                value={activeStrategies.includes(strategy) ? strategy : (strategy ? 'NEW' : activeStrategies[0] || 'ORDER FLOW 1:3')}
                                                 onChange={(e) => {
                                                     if (e.target.value === 'NEW') {
                                                         setStrategy('');
@@ -364,7 +362,7 @@ export const QuickAddTrade = ({ isOpen, onClose }: QuickAddTradeProps) => {
                                                 {activeStrategies.map(strat => (
                                                     <option key={strat} value={strat}>{strat.toUpperCase()}</option>
                                                 ))}
-                                                <option value="NEW">+ Add New Strategy</option>
+                                                <option value="NEW">+ Add New Variant</option>
                                             </select>
                                         )}
                                     </div>

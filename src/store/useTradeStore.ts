@@ -21,7 +21,7 @@ export interface Trade {
     instrument?: string; // e.g. 'NQ', 'MNQ', 'ES'
     notes?: string; // Custom trade notes/context
     user_id?: string;
-    strategy?: string; // e.g. 'Order Flow' or 'Liquidez'
+    strategy?: string; // e.g. 'Order Flow'
 }
 
 interface TradeState {
@@ -38,6 +38,7 @@ interface TradeState {
     signOut: () => Promise<void>;
     setUser: (user: User | null) => void;
     setSelectedStrategy: (strategy: string) => void;
+    migrateOrderFlowTrades: () => Promise<void>;
 }
 
 const calculateNetProfit = (outcome: Outcome, ticks: number, stop: number, contracts: number, instrument?: string) => {
@@ -89,7 +90,7 @@ export const useTradeStore = create<TradeState>((set, get) => ({
     user: null,
     isLoading: false,
     fetchTrades: async () => {
-        const { user } = get();
+        const { user, migrateOrderFlowTrades } = get();
         if (!user) return;
 
         set({ isLoading: true });
@@ -101,28 +102,102 @@ export const useTradeStore = create<TradeState>((set, get) => ({
             
         if (!error && data) {
             set({ trades: data as Trade[] });
+            
+            // Triggers migration if unmigrated trades exist.
+            if (data.some(t => !t.strategy || t.strategy.trim().toLowerCase() === 'order flow' || t.strategy.trim() === 'Order Flow')) {
+                console.log('Old Order Flow trades detected, triggering migration...');
+                // Running asynchronously so UI doesn't block
+                migrateOrderFlowTrades().then(() => get().fetchTrades());
+            }
+
+            // Cleanup specific unwanted legacy strategies as requested
+            const badTrades = data.filter(t => {
+                const s = t.strategy?.toLowerCase() || '';
+                return s.includes('liquidez') || s.includes('scalp');
+            });
+            if (badTrades.length > 0) {
+                console.log('Deleting legacy strategies (liquidez, hard scalping)...');
+                Promise.all(badTrades.map(bt => supabase.from('trades').delete().eq('id', bt.id)))
+                    .then(() => get().fetchTrades());
+            }
+
         } else {
             console.error('Failed to fetch trades:', error);
         }
         set({ isLoading: false });
+    },
+    migrateOrderFlowTrades: async () => {
+        const { user, trades } = get();
+        if (!user) return;
+
+        const candidates = trades.filter(t => !t.strategy || t.strategy.trim().toLowerCase() === 'order flow' || t.strategy.trim() === 'Order Flow');
+        if (candidates.length === 0) return;
+
+        for (const trade of candidates) {
+            // Updated original to 1:3
+            await supabase.from('trades').update({ strategy: 'ORDER FLOW 1:3' }).eq('id', trade.id);
+
+            // Clone to 1:1.5
+            let newOutcome = trade.outcome;
+            if (trade.outcome === 'BE' || trade.outcome === 'TP') {
+                newOutcome = 'TP';
+            }
+            
+            // Recalculate target to roughly half for the 1.5R version.
+            const newTicksTarget = trade.ticksTarget > 0 ? trade.ticksTarget / 2 : 0;
+            const newNetProfit = calculateNetProfit(newOutcome, newTicksTarget, trade.stopTicks, trade.contracts, trade.instrument);
+
+            const { id, ...tradeWithoutId } = trade;
+            await supabase.from('trades').insert([{
+                ...tradeWithoutId,
+                strategy: 'ORDER FLOW 1:1.5',
+                outcome: newOutcome,
+                ticksTarget: newTicksTarget,
+                netProfit: newNetProfit
+            }]);
+        }
     },
     addTrade: async (tradeInput) => {
         const { user } = get();
         if (!user) return;
 
         const netProfit = calculateNetProfit(tradeInput.outcome, tradeInput.ticksTarget, tradeInput.stopTicks, tradeInput.contracts, tradeInput.instrument);
+        const resolvedStrategy = tradeInput.strategy ? tradeInput.strategy.trim().toUpperCase() : 'ORDER FLOW 1:3';
             
         const newTrade = {
             ...tradeInput,
             account: tradeInput.account?.trim().toUpperCase() || 'PERSONAL',
             netProfit,
-            strategy: tradeInput.strategy ? tradeInput.strategy.trim() : 'Order Flow',
+            strategy: resolvedStrategy,
             user_id: user.id
         };
 
         const { data, error } = await supabase.from('trades').insert([newTrade]).select().single();
         if (!error && data) {
-            set((state) => ({ trades: [...state.trades, data as Trade] }));
+            let tradesToAdd = [data as Trade];
+
+            // AUTO GENERATE THE 1:1.5 VARIANT WHEN "ORDER FLOW 1:3" is executed
+            if (resolvedStrategy === 'ORDER FLOW 1:3') {
+                let newOutcome = tradeInput.outcome;
+                if (tradeInput.outcome === 'BE' || tradeInput.outcome === 'TP') newOutcome = 'TP';
+                const newTicksTarget = tradeInput.ticksTarget > 0 ? tradeInput.ticksTarget / 2 : 0;
+                const clonedNetProfit = calculateNetProfit(newOutcome, newTicksTarget, tradeInput.stopTicks, tradeInput.contracts, tradeInput.instrument);
+
+                const clonedInput = {
+                    ...newTrade,
+                    strategy: 'ORDER FLOW 1:1.5',
+                    outcome: newOutcome,
+                    ticksTarget: newTicksTarget,
+                    netProfit: clonedNetProfit
+                };
+
+                const { data: clonedData, error: clonedError } = await supabase.from('trades').insert([clonedInput]).select().single();
+                if (!clonedError && clonedData) {
+                    tradesToAdd.push(clonedData as Trade);
+                }
+            }
+
+            set((state) => ({ trades: [...state.trades, ...tradesToAdd] }));
         } else {
             console.error('Failed to add trade:', error);
             throw error;

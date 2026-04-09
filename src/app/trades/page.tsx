@@ -14,11 +14,9 @@ export default function TradesPage() {
     const selectedStrategy = useTradeStore(state => state.selectedStrategy);
 
     const activeStrategies = useMemo(() => {
-        const strats = trades.map(t => t.strategy ? t.strategy.trim() : 'Order Flow');
+        const strats = trades.map(t => t.strategy ? t.strategy.trim() : 'ORDER FLOW 1:3');
         const unique = Array.from(new Set(strats));
-        if (!unique.includes('Order Flow')) unique.push('Order Flow');
-        if (!unique.includes('Liquidez')) unique.push('Liquidez');
-        if (!unique.includes('HARD CALPING')) unique.push('HARD CALPING');
+        if (!unique.includes('ORDER FLOW 1:3')) unique.push('ORDER FLOW 1:3');
         return unique.sort();
     }, [trades]);
 
@@ -45,7 +43,7 @@ export default function TradesPage() {
                             </div>
                             <div className="flex items-center gap-4">
                                 <div className="flex items-center gap-2 bg-gunmetal-900 border border-gunmetal-700 px-3 py-1.5 rounded-full">
-                                    <span className="text-[10px] font-bold text-gray-400 uppercase tracking-wider">STRATEGY:</span>
+                                    <span className="text-[10px] font-bold text-gray-400 uppercase tracking-wider">STRATEGY / VARIANT:</span>
                                     <select
                                         value={selectedStrategy}
                                         onChange={(e) => useTradeStore.getState().setSelectedStrategy(e.target.value)}
