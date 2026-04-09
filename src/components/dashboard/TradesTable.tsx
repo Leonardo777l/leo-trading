@@ -5,7 +5,6 @@ import { useActiveTrades, useTradeStore } from '@/store/useTradeStore';
 import { Card } from '@/components/ui/Card';
 import { format } from 'date-fns';
 import { Search, Activity, ExternalLink, Filter, Download, Database } from 'lucide-react';
-import { reseedData } from '@/data/reseedData';
 
 export const TradesTable = () => {
     const trades = useActiveTrades();
@@ -98,8 +97,12 @@ export const TradesTable = () => {
                         onClick={async () => {
                             if (confirm('This will DELETE all current trades and re-initialize from the TRADES TOTALES.csv backup. Are you SURE?')) {
                                 try {
-                                    // @ts-expect-error - reseedData has no id as required by heavyReseed
-                                    await heavyReseed(reseedData);
+                                    const response = await fetch('/reseedData.json');
+                                    if (!response.ok) throw new Error('Could not load backup data');
+                                    const data = await response.json();
+                                    
+                                    // @ts-expect-error - data has no id as required by heavyReseed
+                                    await heavyReseed(data);
                                     alert('Database reseeded successfully!');
                                 } catch {
                                     alert('Error seeding database. Check console.');
