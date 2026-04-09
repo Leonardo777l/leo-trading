@@ -93,28 +93,6 @@ export const TradesTable = () => {
                 </div>
 
                 <div className="flex flex-wrap items-center gap-3">
-                    <button
-                        onClick={async () => {
-                            if (confirm('¿ESTÁS SEGURO? Esto borrará TODA la base de datos actual y cargará los trades originales de tu archivo TRADES TOTALES.csv (con NQ convertido a MNQ).')) {
-                                try {
-                                    const response = await fetch('/reseedData.json');
-                                    if (!response.ok) throw new Error('Could not load backup data');
-                                    const data = await response.json();
-                                    
-                                    await heavyReseed(data);
-                                    alert('Base de datos restaurada con éxito!');
-                                } catch {
-                                    alert('Error al restaurar. Revisa la consola.');
-                                }
-                            }
-                        }}
-                        disabled={isLoading}
-                        className="flex items-center gap-1.5 bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg transition-all text-xs font-bold shadow-lg shadow-blue-500/20 disabled:opacity-50"
-                        title="Restaurar desde Backup Original"
-                    >
-                        <Database className="w-4 h-4" />
-                        <span>{isLoading ? 'Restaurando...' : 'Restaurar Backup Original'}</span>
-                    </button>
 
                     <div className="flex items-center gap-2 bg-gunmetal-800 border border-gunmetal-700 rounded-lg p-1.5">
                         <Filter className="w-4 h-4 text-gray-400 ml-1" />
