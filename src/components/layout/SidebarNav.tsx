@@ -2,7 +2,6 @@ import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { LayoutDashboard, ListTree, Wallet, LogOut, BookOpenText } from 'lucide-react';
 import { useTradeStore } from '@/store/useTradeStore';
-import { DatabaseSwitcher } from './DatabaseSwitcher';
 
 export const SidebarNav = () => {
     const pathname = usePathname();
@@ -39,9 +38,6 @@ export const SidebarNav = () => {
                 );
             })}
 
-            <div className="w-10 h-[1px] bg-gunmetal-700 my-2 hidden md:block" />
-
-            <DatabaseSwitcher />
 
             <div className="md:mt-auto flex md:flex-col items-center gap-4">
                 {user?.user_metadata?.avatar_url && (

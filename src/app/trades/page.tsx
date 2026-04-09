@@ -1,8 +1,8 @@
 'use client';
 
 import { useState } from 'react';
-import { useTradeStore } from '@/store/useTradeStore';
 import { DashboardLayout } from '@/components/layout/DashboardLayout';
+import { DatabaseSwitcher } from '@/components/layout/DatabaseSwitcher';
 import { TradesTable } from '@/components/dashboard/TradesTable';
 import { TimelineFeed } from '@/components/dashboard/TimelineFeed';
 import { CsvUploader } from '@/components/import/CsvUploader';
@@ -10,7 +10,6 @@ import { QuickAddTrade } from '@/components/forms/QuickAddTrade';
 
 export default function TradesPage() {
     const [isQuickAddOpen, setIsQuickAddOpen] = useState(false);
-    const selectedStrategy = useTradeStore(state => state.selectedStrategy);
 
 
     return (
@@ -35,10 +34,7 @@ export default function TradesPage() {
                                 </p>
                             </div>
                             <div className="flex items-center gap-4">
-                                <div className="flex items-center gap-2 bg-gunmetal-900 border border-gunmetal-700 px-3 py-1.5 rounded-full">
-                                    <span className="text-[10px] font-black text-gray-400 uppercase tracking-widest">ACTIVE DATABASE:</span>
-                                    <span className="text-[11px] font-black text-target uppercase tracking-wider">{selectedStrategy}</span>
-                                </div>
+                                <DatabaseSwitcher variant="header" />
                             </div>
                         </header>
 

@@ -1,8 +1,8 @@
 'use client';
 
 import { useState } from 'react';
-import { useTradeStore } from '@/store/useTradeStore';
 import { DashboardLayout } from '@/components/layout/DashboardLayout';
+import { DatabaseSwitcher } from '@/components/layout/DatabaseSwitcher';
 import { StatsOverview } from '@/components/dashboard/StatsOverview';
 import { EquityCurve } from '@/components/dashboard/EquityCurve';
 import { PsychologyHeatmap } from '@/components/dashboard/PsychologyHeatmap';
@@ -13,7 +13,6 @@ import { QuickAddTrade } from '@/components/forms/QuickAddTrade';
 
 export default function Home() {
   const [isQuickAddOpen, setIsQuickAddOpen] = useState(false);
-  const selectedStrategy = useTradeStore(state => state.selectedStrategy);
 
 
   return (
@@ -32,10 +31,7 @@ export default function Home() {
               </p>
             </div>
             <div className="flex items-center gap-4">
-              <div className="flex items-center gap-2 bg-gunmetal-900 border border-gunmetal-700 px-3 py-1.5 rounded-full">
-                <span className="text-[10px] font-black text-gray-400 uppercase tracking-widest">ACTIVE DATABASE:</span>
-                <span className="text-[11px] font-black text-target uppercase tracking-wider">{selectedStrategy}</span>
-              </div>
+              <DatabaseSwitcher variant="header" />
               
               <div className="flex items-center gap-2 bg-gunmetal-900 border border-gunmetal-700 px-3 py-1.5 rounded-full">
                 <div className="w-2 h-2 rounded-full bg-target animate-pulse shadow-[0_0_8px_#00C805]" />

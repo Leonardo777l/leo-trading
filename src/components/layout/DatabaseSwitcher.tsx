@@ -2,10 +2,14 @@
 
 import { useMemo, useState } from 'react';
 import { useTradeStore } from '@/store/useTradeStore';
-import { Database, Plus, Check } from 'lucide-react';
+import { Database, Plus, Check, ChevronDown } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 
-export const DatabaseSwitcher = () => {
+interface DatabaseSwitcherProps {
+    variant?: 'sidebar' | 'header';
+}
+
+export const DatabaseSwitcher = ({ variant = 'sidebar' }: DatabaseSwitcherProps) => {
     const { trades, selectedStrategy, setSelectedStrategy } = useTradeStore();
     const [isOpen, setIsOpen] = useState(false);
     const [isCreating, setIsCreating] = useState(false);
@@ -15,6 +19,8 @@ export const DatabaseSwitcher = () => {
         const strats = trades.map(t => t.strategy ? t.strategy.trim() : 'Order Flow');
         const unique = Array.from(new Set(strats));
         if (!unique.includes('Order Flow')) unique.push('Order Flow');
+        // Always show ORDER FLOW 1.5 in the list if it doesn't exist yet to make it easy to find
+        if (!unique.includes('ORDER FLOW 1.5')) unique.push('ORDER FLOW 1.5');
         return unique.sort();
     }, [trades]);
 
@@ -29,17 +35,32 @@ export const DatabaseSwitcher = () => {
 
     return (
         <div className="relative group/switcher">
-            <button
-                onClick={() => setIsOpen(!isOpen)}
-                className={`flex items-center justify-center w-12 h-12 rounded-full transition-all duration-300 border ${
-                    isOpen 
-                    ? 'bg-gunmetal-800 border-target text-target' 
-                    : 'bg-gunmetal-900 border-gunmetal-700 text-gray-500 hover:text-white hover:border-gray-500'
-                }`}
-                title="Switch Database"
-            >
-                <Database className="w-5 h-5" />
-            </button>
+            {variant === 'sidebar' ? (
+                <button
+                    onClick={() => setIsOpen(!isOpen)}
+                    className={`flex items-center justify-center w-12 h-12 rounded-full transition-all duration-300 border ${
+                        isOpen 
+                        ? 'bg-gunmetal-800 border-target text-target' 
+                        : 'bg-gunmetal-900 border-gunmetal-700 text-gray-500 hover:text-white hover:border-gray-500'
+                    }`}
+                    title="Switch Database"
+                >
+                    <Database className="w-5 h-5" />
+                </button>
+            ) : (
+                <button
+                    onClick={() => setIsOpen(!isOpen)}
+                    className="flex items-center gap-2 bg-gunmetal-900 border border-gunmetal-700 px-3 py-1.5 rounded-full hover:border-target/50 transition-all cursor-pointer group"
+                >
+                    <span className="text-[10px] font-black text-gray-400 uppercase tracking-widest group-hover:text-gray-300">
+                        ACTIVE DATABASE:
+                    </span>
+                    <span className="text-[11px] font-black text-target uppercase tracking-wider flex items-center gap-1.5">
+                        {selectedStrategy}
+                        <ChevronDown className={`w-3 h-3 transition-transform duration-300 ${isOpen ? 'rotate-180' : ''}`} />
+                    </span>
+                </button>
+            )}
 
             <AnimatePresence>
                 {isOpen && (
@@ -48,14 +69,16 @@ export const DatabaseSwitcher = () => {
                             initial={{ opacity: 0 }}
                             animate={{ opacity: 1 }}
                             exit={{ opacity: 0 }}
-                            className="fixed inset-0 z-40 bg-black/20 backdrop-blur-[1px] md:hidden"
+                            className="fixed inset-0 z-[100] bg-black/10 backdrop-blur-[1px]"
                             onClick={() => setIsOpen(false)}
                         />
                         <motion.div
-                            initial={{ opacity: 0, x: -10, scale: 0.95 }}
-                            animate={{ opacity: 1, x: 0, scale: 1 }}
-                            exit={{ opacity: 0, x: -10, scale: 0.95 }}
-                            className="absolute left-16 top-0 z-50 min-w-[200px] bg-gunmetal-900 border border-gunmetal-700 rounded-xl shadow-2xl p-2"
+                            initial={{ opacity: 0, y: variant === 'sidebar' ? 0 : 10, x: variant === 'sidebar' ? -10 : 0, scale: 0.95 }}
+                            animate={{ opacity: 1, y: 0, x: 0, scale: 1 }}
+                            exit={{ opacity: 0, y: variant === 'sidebar' ? 0 : 10, x: variant === 'sidebar' ? -10 : 0, scale: 0.95 }}
+                            className={`absolute z-[110] min-w-[220px] bg-gunmetal-900 border border-gunmetal-700 rounded-xl shadow-[0_20px_50px_rgba(0,0,0,0.5)] p-2 ${
+                                variant === 'sidebar' ? 'left-16 top-0' : 'right-0 top-full mt-2'
+                            }`}
                         >
                             <div className="px-3 py-2 border-b border-gunmetal-700 mb-2">
                                 <span className="text-[10px] font-black uppercase tracking-widest text-gray-500">
