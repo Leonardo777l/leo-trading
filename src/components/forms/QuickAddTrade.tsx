@@ -50,7 +50,7 @@ export const QuickAddTrade = ({ isOpen, onClose }: QuickAddTradeProps) => {
     };
 
     const instrumentInfo = useMemo(() => getInstrumentInfo(instrument), [instrument]);
-    const { tickValue, comm, ticksPerPoint } = instrumentInfo;
+    const { tickValue, comm } = instrumentInfo;
 
     const calculatedTicksTarget = targetTicksInput ? Math.round(Number(targetTicksInput)) : 0;
     const calculatedStopTicks = stopTicksInput ? Math.round(Number(stopTicksInput)) : 0;
@@ -61,9 +61,6 @@ export const QuickAddTrade = ({ isOpen, onClose }: QuickAddTradeProps) => {
         if (calculatedContracts < 1) calculatedContracts = 1;
     }
 
-    const targetPoints = calculatedTicksTarget / ticksPerPoint;
-    const stopPoints = calculatedStopTicks / ticksPerPoint;
-    
     const totalComm = calculatedContracts * comm;
     
     let estimatedPnL = 0;

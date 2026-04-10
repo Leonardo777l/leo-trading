@@ -55,8 +55,6 @@ export default function RulesPage() {
     const displayBal = initialBal + netProfitLogged;
     // Basic static MLL tracking for visual
     const displayMll = initialMll; 
-    const passTarget = initialBal + 3000;
-
     const currentDrawdownRoom = displayBal - displayMll;
     const healthPercent = Math.max(0, Math.min(100, (currentDrawdownRoom / 2000) * 100));
     
