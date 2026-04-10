@@ -15,7 +15,7 @@ export const DatabaseSwitcher = ({ variant = 'sidebar' }: DatabaseSwitcherProps)
     const [isCreating, setIsCreating] = useState(false);
     const [newDbName, setNewDbName] = useState('');
 
-    const availableDatabases = ['ORDER FLOW', 'ORDER FLOW 1.5', 'RR NEGATIVO'];
+    const availableDatabases = ['ORDER FLOW 1:3', 'ORDER FLOW 1.5', 'RR NEGATIVO'];
 
     return (
         <div className="relative group/switcher">

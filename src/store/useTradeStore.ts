@@ -113,7 +113,7 @@ const calculateNetProfit = (outcome: Outcome, ticks: number, stop: number, contr
 
 export const useTradeStore = create<TradeState>((set, get) => ({
     trades: [],
-    selectedStrategy: 'Order Flow', // Default Database
+    selectedStrategy: 'ORDER FLOW 1:3', // Default Database
     user: null,
     isLoading: false,
     fetchTrades: async () => {

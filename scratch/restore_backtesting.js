@@ -139,7 +139,7 @@ if (fs.existsSync('ESTRATEGIA 2.csv')) {
             imageLink: '',
             account: 'BACK TESTING',
             instrument: row.Asset || 'MNQ',
-            strategy: 'ORDER FLOW', // Normalized name
+            strategy: 'ORDER FLOW 1:3', // Normalized name
             notes: (row.Notes || '').replace(/^"/, '').replace(/"$/, '').trim()
         };
 
