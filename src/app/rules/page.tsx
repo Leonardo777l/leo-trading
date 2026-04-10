@@ -1,52 +1,45 @@
 'use client';
 
-import { useState, useEffect } from 'react';
-import { ShieldAlert, Target, Plus, Trash2, CheckCircle2, Circle } from 'lucide-react';
-import { useRuleStore } from '@/store/useRuleStore';
-import { useTradeStore } from '@/store/useTradeStore';
+import { useState } from 'react';
+import { Target, AlertOctagon, TrendingDown, DollarSign, ListChecks, ArrowDownCircle, ArrowUpCircle, Trash2 } from 'lucide-react';
 import { DashboardLayout } from '@/components/layout/DashboardLayout';
 import { QuickAddTrade } from '@/components/forms/QuickAddTrade';
+import { useBitacoraStore, ShotOutcome } from '@/store/useBitacoraStore';
 
 export default function RulesPage() {
-    const { user } = useTradeStore();
-    const { rules, fetchRules, addRule, removeRule, isLoading } = useRuleStore();
-
     const [isQuickAddOpen, setIsQuickAddOpen] = useState(false);
-    const [newTitle, setNewTitle] = useState('');
-    const [newDesc, setNewDesc] = useState('');
-    const [isAdding, setIsAdding] = useState(false);
+    
+    const { shots, addShot, updateShot, deleteShot, resetShots } = useBitacoraStore();
 
-    // Checklist state: stores IDs of checked rules
-    const [checkedRules, setCheckedRules] = useState<Set<string>>(new Set());
+    // Account constraints based on user specs
+    const initialBal = 49604.71;
+    const initialMll = 48146.37;
+    const riskPerEntry = 150;
+    const initialDrawdownRoom = initialBal - initialMll;
 
-    useEffect(() => {
-        if (user) {
-            fetchRules(user);
-        }
-    }, [user, fetchRules]);
+    // We can compute current hypothetical balance based on the shots
+    // Assuming a Target = +150 (or similar risk-reward maybe +225 for 1:1.5? but let's stick to base risk units for now or just generic target)
+    // To be safer and keep it simple, we just use the raw count. 
+    const targetsCount = shots.filter(s => s.outcome === 'target').length;
+    const stopsCount = shots.filter(s => s.outcome === 'stop').length;
 
-    const handleAddRule = async (e: React.FormEvent) => {
-        e.preventDefault();
-        if (!newTitle.trim() || !user) return;
-        setIsAdding(true);
-        await addRule(user, newTitle, newDesc);
-        setNewTitle('');
-        setNewDesc('');
-        setIsAdding(false);
-    };
+    // Optional hypothetical progression if we assume RR 1:1.5 
+    const assumedWinAmount = riskPerEntry * 1.5;
+    const assumedLossAmount = riskPerEntry;
+    
+    // Net profit from logged shots
+    const netProfitLogged = (targetsCount * assumedWinAmount) - (stopsCount * assumedLossAmount);
 
-    const toggleCheck = (id: string) => {
-        setCheckedRules(prev => {
-            const next = new Set(prev);
-            if (next.has(id)) next.delete(id);
-            else next.add(id);
-            return next;
-        });
-    };
+    const displayBal = initialBal + netProfitLogged;
+    // MLL (Trailing or Static?) TopStep trails positively until 50k but let's assume it's static for the simplicity of the visual 
+    // unless balance creates a new threshold, for now just show MLL static or moving with balance max.
+    const highestBal = Math.max(initialBal, displayBal);
+    // If it's a trailing drawdown from HWM max of $2000 loss
+    const displayMll = Math.max(initialMll, highestBal - 2000); 
 
-    const handleResetChecklist = () => {
-        setCheckedRules(new Set());
-    };
+    const currentDrawdownRoom = displayBal - displayMll;
+    // Maximum allowable difference from MLL = $2000
+    const healthPercent = Math.max(0, Math.min(100, (currentDrawdownRoom / 2000) * 100));
 
     return (
         <>
@@ -57,190 +50,206 @@ export default function RulesPage() {
                     <header className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
                         <div>
                             <h1 className="text-3xl font-black tracking-tighter text-transparent bg-clip-text bg-gradient-to-r from-white to-gray-500">
-                                REGLAS Y CHECKLIST
+                                REGLAS Y DE LA CUENTA
                             </h1>
                             <p className="text-xs font-semibold text-gray-500 tracking-widest mt-1 uppercase">
-                                Disciplina, Estrategia y Gestión de Riesgo Personalizada
+                                Parámetros fijos y Bitácora de Operación
                             </p>
                         </div>
                     </header>
 
-                <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 w-full">
-                    
-                    {/* COLUMNA 1: MIS REGLAS (CRUD) */}
-                    <div className="flex flex-col gap-6">
-                        <div className="bg-gunmetal-900 border border-gunmetal-700 p-6 md:p-8 rounded-[2rem] relative shadow-2xl flex flex-col h-full">
-                            <h2 className="text-2xl font-black text-white mb-6 flex items-center gap-3 shrink-0">
-                                <span className="w-2 h-8 bg-blue-500 rounded-full"></span>
-                                Mis Reglas de Trading
-                            </h2>
-                            
-                            {/* ADD RULE FORM */}
-                            <form onSubmit={handleAddRule} className="mb-8 flex flex-col gap-3 bg-gunmetal-800/40 p-5 rounded-2xl border border-gunmetal-700/30 shrink-0">
-                                <h3 className="text-sm font-bold text-gray-400 mb-1 uppercase tracking-wider">Añadir Nueva Regla</h3>
-                                <input 
-                                    type="text" 
-                                    placeholder="Título (ej. A favor de tendencia)" 
-                                    className="w-full bg-gunmetal-950/50 border border-gunmetal-700 rounded-xl px-4 py-3 text-white placeholder-gray-500 focus:outline-none focus:border-blue-500 transition-colors font-semibold"
-                                    value={newTitle}
-                                    onChange={(e) => setNewTitle(e.target.value)}
-                                    required
-                                />
-                                <textarea 
-                                    placeholder="Descripción corta de tu parámetro (opcional)" 
-                                    className="w-full bg-gunmetal-950/50 border border-gunmetal-700 rounded-xl px-4 py-3 text-white placeholder-gray-500 focus:outline-none focus:border-blue-500 transition-colors resize-none h-20 text-sm font-medium"
-                                    value={newDesc}
-                                    onChange={(e) => setNewDesc(e.target.value)}
-                                />
-                                <button 
-                                    type="submit" 
-                                    disabled={isAdding || !newTitle.trim()}
-                                    className="bg-blue-600 hover:bg-blue-500 text-white font-bold py-3 px-4 rounded-xl flex items-center justify-center gap-2 transition-all disabled:opacity-30 disabled:hover:bg-blue-600 mt-2"
-                                >
-                                    <Plus className="w-5 h-5" />
-                                    {isAdding ? 'Guardando...' : 'Guardar Regla'}
-                                </button>
-                            </form>
-
-                            {/* RULES LIST */}
-                            <div className="space-y-4 overflow-y-auto pr-2 custom-scrollbar flex-1">
-                                {isLoading ? (
-                                    <div className="flex justify-center items-center py-8">
-                                        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-white"></div>
-                                    </div>
-                                ) : rules.length === 0 ? (
-                                    <div className="text-center py-12 border border-dashed border-gunmetal-700 rounded-2xl flex flex-col items-center justify-center opacity-60">
-                                        <ShieldAlert className="w-12 h-12 text-gray-500 mb-3" />
-                                        <p className="text-gray-400 text-sm font-medium">Aún no tienes reglas.</p>
-                                        <p className="text-gray-500 text-xs">Agrega una regla usando el formulario de arriba.</p>
-                                    </div>
-                                ) : (
-                                    rules.map((rule) => (
-                                        <div key={rule.id} className="group relative flex gap-4 items-start bg-gunmetal-800/80 p-5 rounded-2xl border border-gunmetal-700 hover:border-blue-500/30 transition-colors">
-                                            <div className="flex-1">
-                                                <h3 className="text-base font-bold text-white mb-1">{rule.title}</h3>
-                                                {rule.description && (
-                                                    <p className="text-sm text-gray-400 leading-relaxed font-medium">{rule.description}</p>
-                                                )}
-                                            </div>
-                                            <button 
-                                                onClick={() => removeRule(rule.id)}
-                                                className="opacity-0 group-hover:opacity-100 p-2 text-gray-500 hover:text-stop hover:bg-stop/10 rounded-lg border border-transparent hover:border-stop/20 transition-all shrink-0"
-                                                title="Eliminar regla"
-                                            >
-                                                <Trash2 className="w-5 h-5" />
-                                            </button>
+                    <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 w-full">
+                        
+                        {/* COLUMNA 1: REGLAS FIJAS TOPSTEP */}
+                        <div className="lg:col-span-4 flex flex-col gap-6">
+                            <div className="bg-gunmetal-900 border border-gunmetal-700 p-6 md:p-8 rounded-[2rem] relative shadow-2xl flex flex-col h-full">
+                                <h2 className="text-2xl font-black text-white mb-6 flex items-center gap-3">
+                                    <span className="w-2 h-8 bg-blue-500 rounded-full"></span>
+                                    Reglas 50k TopStep
+                                </h2>
+                                
+                                <div className="space-y-4 flex-1">
+                                    {/* Regla 1: Drawdown */}
+                                    <div className="bg-gunmetal-800/80 p-5 rounded-2xl border border-gunmetal-700 flex gap-4 items-center">
+                                        <div className="bg-red-500/10 p-3 rounded-xl shrink-0">
+                                            <TrendingDown className="w-6 h-6 text-red-500" />
                                         </div>
-                                    ))
-                                )}
+                                        <div>
+                                            <p className="text-xs text-gray-400 font-bold uppercase tracking-wider mb-1">Drawdown Máximo</p>
+                                            <p className="text-xl font-black text-white">$2,000.00</p>
+                                        </div>
+                                    </div>
+
+                                    {/* Regla 2: Riesgo por entrada */}
+                                    <div className="bg-gunmetal-800/80 p-5 rounded-2xl border border-gunmetal-700 flex gap-4 items-center">
+                                        <div className="bg-blue-500/10 p-3 rounded-xl shrink-0">
+                                            <DollarSign className="w-6 h-6 text-blue-500" />
+                                        </div>
+                                        <div className="flex-1">
+                                            <p className="text-xs text-gray-400 font-bold uppercase tracking-wider mb-1">Riesgo por Entrada</p>
+                                            <p className="text-xl font-black text-white">$150.00</p>
+                                        </div>
+                                        <div className="text-right">
+                                            <p className="text-xs text-gray-500 font-semibold mb-1">Max Tiros</p>
+                                            <p className="text-lg font-black text-blue-400 font-mono">~13</p>
+                                        </div>
+                                    </div>
+
+                                    {/* Regla 3: Stops Diarios */}
+                                    <div className="bg-gunmetal-800/80 p-5 rounded-2xl border border-gunmetal-700 flex gap-4 items-center">
+                                        <div className="bg-stop/10 p-3 rounded-xl shrink-0">
+                                            <AlertOctagon className="w-6 h-6 text-stop" />
+                                        </div>
+                                        <div>
+                                            <p className="text-xs text-gray-400 font-bold uppercase tracking-wider mb-1">Límite Diario</p>
+                                            <p className="text-lg font-bold text-white">2 Stop Loss</p>
+                                            <p className="text-xs text-gray-500 mt-1">Si pierdes 2, se apaga la pantalla.</p>
+                                        </div>
+                                    </div>
+
+                                    {/* Regla 4: Targets Diarios */}
+                                    <div className="bg-gunmetal-800/80 p-5 rounded-2xl border border-gunmetal-700 flex gap-4 items-center">
+                                        <div className="bg-target/10 p-3 rounded-xl shrink-0">
+                                            <Target className="w-6 h-6 text-target" />
+                                        </div>
+                                        <div>
+                                            <p className="text-xs text-gray-400 font-bold uppercase tracking-wider mb-1">Meta Diaria</p>
+                                            <p className="text-lg font-bold text-white">2 Targets</p>
+                                            <p className="text-xs text-gray-500 mt-1">Cobra ganancias y descansa.</p>
+                                        </div>
+                                    </div>
+                                </div>
                             </div>
                         </div>
-                    </div>
 
-                    {/* COLUMNA 2: CHECKLIST DE PRE-ENTRADA */}
-                    <div className="flex flex-col gap-6">
-                        <div className="bg-gunmetal-900 border border-gunmetal-700 p-6 md:p-8 rounded-[2rem] relative shadow-2xl overflow-hidden group flex flex-col h-full min-h-[500px]">
-                            {/* Efecto de fondo sutil */}
-                            <div className="absolute top-0 right-0 w-64 h-64 bg-target/5 rounded-full blur-3xl -mr-32 -mt-32 transition-colors duration-500" />
-                            
-                            <div className="relative z-10 flex flex-col h-full">
-                                <div className="flex justify-between items-start mb-2 shrink-0">
+                        {/* COLUMNA 2: BITÁCORA Y GRÁFICO */}
+                        <div className="lg:col-span-8 flex flex-col gap-6">
+                            <div className="bg-gunmetal-900 border border-gunmetal-700 p-6 md:p-8 rounded-[2rem] relative shadow-2xl flex flex-col h-full overflow-hidden">
+                                <div className="absolute top-0 right-0 w-64 h-64 bg-blue-500/5 rounded-full blur-3xl -mr-32 -mt-32 pointer-events-none" />
+                                
+                                <div className="flex justify-between items-start mb-6">
                                     <h2 className="text-2xl font-black text-white flex items-center gap-3">
                                         <span className="w-2 h-8 bg-target rounded-full"></span>
-                                        Checklist de Entrada
+                                        Bitácora de Desarrollo
                                     </h2>
-                                    {checkedRules.size > 0 && (
+                                    {shots.length > 0 && (
                                         <button 
-                                            onClick={handleResetChecklist}
-                                            className="text-xs font-bold text-gray-400 hover:text-white bg-gunmetal-800 px-3 py-1.5 rounded-lg border border-gunmetal-700 transition-colors"
+                                            onClick={resetShots}
+                                            className="text-xs font-bold text-gray-400 hover:text-white transition-colors flex items-center gap-1 bg-gunmetal-800 px-3 py-1.5 rounded-lg border border-gunmetal-700"
                                         >
-                                            RESETEAR
+                                            <Trash2 className="w-3 h-3" />
+                                            LIMPIAR HISTORIAL
                                         </button>
                                     )}
                                 </div>
-                                
-                                <p className="text-sm text-gray-400 font-medium mb-8 shrink-0">
-                                    Antes de apretar el gatillo, verifica que presentes todas tus confirmaciones al mercado.
-                                </p>
 
-                                <div className="space-y-3 overflow-y-auto pr-2 custom-scrollbar flex-1">
-                                    {rules.length === 0 ? (
-                                        <div className="flex flex-col items-center justify-center h-full py-12 text-gray-600">
-                                            <Target className="w-16 h-16 mb-4 opacity-30" />
-                                            <p className="text-sm font-medium opacity-80">Agrega reglas en el panel izquierdo</p>
-                                            <p className="text-xs opacity-60">para construir tu checklist de entrada.</p>
-                                        </div>
-                                    ) : (
-                                        rules.map((rule) => {
-                                            const isChecked = checkedRules.has(rule.id);
-                                            return (
-                                                <button 
-                                                    key={rule.id}
-                                                    onClick={() => toggleCheck(rule.id)}
-                                                    className={`w-full text-left flex items-start gap-4 p-5 rounded-2xl border transition-all duration-200 group/check ${
-                                                        isChecked 
-                                                        ? 'bg-target/10 border-target/50 shadow-[0_0_15px_rgba(var(--color-target-rgb),0.1)]' 
-                                                        : 'bg-gunmetal-950/50 border-gunmetal-700/50 hover:bg-gunmetal-800/80 hover:border-gunmetal-600'
-                                                    }`}
-                                                >
-                                                    <div className="mt-0.5 shrink-0 transition-transform group-hover/check:scale-110">
-                                                        {isChecked ? (
-                                                            <CheckCircle2 className="w-6 h-6 text-target shadow-[0_0_10px_rgba(var(--color-target-rgb),0.5)] rounded-full" />
-                                                        ) : (
-                                                            <Circle className="w-6 h-6 text-gray-600 group-hover/check:text-gray-500" />
-                                                        )}
-                                                    </div>
-                                                    <div className={`flex-1 transition-all duration-300 ${isChecked ? 'opacity-70' : 'opacity-100'}`}>
-                                                        <h3 className={`text-sm font-bold transition-colors ${isChecked ? 'text-target line-through' : 'text-white'}`}>
-                                                            {rule.title}
-                                                        </h3>
-                                                        {rule.description && (
-                                                            <p className={`text-xs mt-1 transition-colors leading-relaxed ${isChecked ? 'text-target/70 line-through' : 'text-gray-400'}`}>
-                                                                {rule.description}
-                                                            </p>
-                                                        )}
-                                                    </div>
-                                                </button>
-                                            );
-                                        })
-                                    )}
+                                {/* DASHBOARD DE CUENTA */}
+                                <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-8">
+                                    <div className="bg-gunmetal-950/50 border border-gunmetal-800 p-5 rounded-2xl flex flex-col">
+                                        <p className="text-xs text-gray-500 uppercase font-bold tracking-widest mb-1">Balance Actual (Est.)</p>
+                                        <p className="text-3xl font-black text-white font-mono">
+                                            ${displayBal.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                                        </p>
+                                    </div>
+                                    <div className="bg-gunmetal-950/50 border border-gunmetal-800 p-5 rounded-2xl flex flex-col">
+                                        <p className="text-xs text-gray-500 uppercase font-bold tracking-widest mb-1">Max Loss Limit (MLL)</p>
+                                        <p className="text-3xl font-black text-red-500/80 font-mono">
+                                            ${displayMll.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                                        </p>
+                                    </div>
                                 </div>
-                                
-                                {/* Progress Bar / Summary */}
-                                {rules.length > 0 && (
-                                    <div className="mt-8 pt-6 border-t border-gunmetal-700/50 shrink-0">
-                                        <div className="flex justify-between items-center text-xs font-bold mb-3">
-                                            <span className="text-gray-400 uppercase tracking-widest">Nivel de Confirmación</span>
-                                            <span className={`px-2 py-0.5 rounded-md ${checkedRules.size === rules.length ? 'bg-target text-black' : 'bg-gunmetal-800 text-gray-300'}`}>
-                                                {checkedRules.size} / {rules.length}
-                                            </span>
-                                        </div>
-                                        <div className="h-3 w-full bg-gunmetal-950 rounded-full overflow-hidden border border-gunmetal-700/50">
-                                            <div 
-                                                className={`h-full transition-all duration-700 ease-out relative ${checkedRules.size === rules.length ? 'bg-target' : 'bg-blue-500'}`}
-                                                style={{ width: `${(checkedRules.size / Math.max(1, rules.length)) * 100}%` }}
-                                            >
-                                                <div className="absolute inset-0 bg-white/20 w-full h-full" style={{ backgroundImage: 'linear-gradient(45deg,rgba(255,255,255,.15) 25%,transparent 25%,transparent 50%,rgba(255,255,255,.15) 50%,rgba(255,255,255,.15) 75%,transparent 75%,transparent)', backgroundSize: '1rem 1rem' }}></div>
+
+                                {/* BARRA DE SALUD (DRAWDOWN) */}
+                                <div className="mb-8">
+                                    <div className="flex justify-between text-xs font-bold mb-2">
+                                        <span className="text-gray-400 uppercase tracking-widest">Colchón Disponible</span>
+                                        <span className={currentDrawdownRoom > 500 ? 'text-target' : 'text-red-500'}>
+                                            ${currentDrawdownRoom.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                                        </span>
+                                    </div>
+                                    <div className="h-4 w-full bg-gunmetal-950 rounded-full overflow-hidden border border-gunmetal-700/50 p-0.5">
+                                        <div 
+                                            className={`h-full rounded-full transition-all duration-700 ease-out ${healthPercent > 50 ? 'bg-target' : healthPercent > 25 ? 'bg-yellow-500' : 'bg-red-500'}`}
+                                            style={{ width: `${healthPercent}%` }}
+                                        />
+                                    </div>
+                                    <p className="text-xs text-gray-500 mt-2 text-right">
+                                        Max permitido: $2,000.00
+                                    </p>
+                                </div>
+
+                                {/* LISTA DE TIROS (CHECKLIST) */}
+                                <div className="flex-1 flex flex-col mt-4 border-t border-gunmetal-800/50 pt-6">
+                                    <div className="flex justify-between items-center mb-4">
+                                        <h3 className="text-sm font-bold text-gray-400 uppercase tracking-wider flex items-center gap-2">
+                                            <ListChecks className="w-4 h-4" />
+                                            Registro de Tiros
+                                        </h3>
+                                        <button
+                                            onClick={() => addShot(null)}
+                                            className="bg-blue-600/20 hover:bg-blue-600/30 text-blue-400 border border-blue-500/30 px-4 py-1.5 rounded-lg text-xs font-bold tracking-wide transition-colors"
+                                        >
+                                            + NUEVO TIRO
+                                        </button>
+                                    </div>
+
+                                    <div className="space-y-3 overflow-y-auto max-h-[350px] custom-scrollbar pr-2">
+                                        {shots.length === 0 ? (
+                                            <div className="text-center py-10 border border-dashed border-gunmetal-700 rounded-2xl opacity-60">
+                                                <Target className="w-10 h-10 text-gray-500 mx-auto mb-3 opacity-50" />
+                                                <p className="text-sm text-gray-400 font-medium">No hay tiros registrados.</p>
+                                                <p className="text-xs text-gray-500">Haz clic en '+ NUEVO TIRO' para empezar la bitácora.</p>
                                             </div>
-                                        </div>
-                                        {checkedRules.size === rules.length && rules.length > 0 && (
-                                            <div className="mt-6 flex flex-col items-center justify-center p-4 bg-target/10 border border-target/30 rounded-xl">
-                                                <p className="text-target text-sm font-black text-center uppercase tracking-widest flex items-center justify-center gap-2">
-                                                    <Target className="w-5 h-5 animate-pulse" />
-                                                    Parámetros Cumplidos
-                                                </p>
-                                                <p className="text-gray-400 text-xs mt-1 font-medium text-center">
-                                                    Todo se alinea. Ejecuta tu trade con disciplina.
-                                                </p>
-                                            </div>
+                                        ) : (
+                                            shots.map((shot, index) => (
+                                                <div key={shot.id} className="flex items-center justify-between bg-gunmetal-950/40 p-3 rounded-xl border border-gunmetal-800/80 group">
+                                                    <div className="flex items-center gap-4">
+                                                        <span className="font-mono text-gray-600 font-black text-sm w-6">
+                                                            #{index + 1}
+                                                        </span>
+                                                        <div className="flex gap-2">
+                                                            <button 
+                                                                onClick={() => updateShot(shot.id, 'target')}
+                                                                className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-bold transition-all border ${
+                                                                    shot.outcome === 'target' 
+                                                                    ? 'bg-target/20 text-target border-target/50 shadow-[0_0_10px_rgba(var(--color-target-rgb),0.2)]'
+                                                                    : 'bg-gunmetal-800/50 text-gray-500 border-transparent hover:bg-target/10 hover:text-target/70'
+                                                                }`}
+                                                            >
+                                                                <ArrowUpCircle className="w-4 h-4" />
+                                                                TARGET
+                                                            </button>
+                                                            <button 
+                                                                onClick={() => updateShot(shot.id, 'stop')}
+                                                                className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-bold transition-all border ${
+                                                                    shot.outcome === 'stop' 
+                                                                    ? 'bg-stop/20 text-stop border-stop/50 shadow-[0_0_10px_rgba(var(--color-stop-rgb),0.2)]'
+                                                                    : 'bg-gunmetal-800/50 text-gray-500 border-transparent hover:bg-stop/10 hover:text-stop/70'
+                                                                }`}
+                                                            >
+                                                                <ArrowDownCircle className="w-4 h-4" />
+                                                                STOP
+                                                            </button>
+                                                        </div>
+                                                    </div>
+                                                    
+                                                    <button 
+                                                        onClick={() => deleteShot(shot.id)}
+                                                        className="opacity-0 group-hover:opacity-100 p-2 text-gray-600 hover:text-red-400 hover:bg-red-400/10 rounded-lg transition-all"
+                                                        title="Eliminar tiro"
+                                                    >
+                                                        <Trash2 className="w-4 h-4" />
+                                                    </button>
+                                                </div>
+                                            ))
                                         )}
                                     </div>
-                                )}
+                                </div>
+                                
                             </div>
                         </div>
-                    </div>
 
-                </div>
+                    </div>
                 </div>
             </DashboardLayout>
 
