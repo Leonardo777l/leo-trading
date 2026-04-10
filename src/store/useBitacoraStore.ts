@@ -39,7 +39,7 @@ interface BitacoraState {
 
 export const useBitacoraStore = create<BitacoraState>()(
     persist(
-        (set, get) => ({
+        (set) => ({
             accounts: [],
             activeAccountId: null,
 
@@ -131,20 +131,21 @@ export const useBitacoraStore = create<BitacoraState>()(
         {
             name: 'funded-accounts-storage',
             version: 1,
-            migrate: (persistedState: any, version) => {
+            migrate: (persistedState: unknown, version) => {
                 if (version === 0) {
                     // Try to migrate legacy shots into a default account if they exist
-                    if (persistedState.shots && persistedState.shots.length > 0) {
+                    const state = persistedState as any;
+                    if (state && state.shots && state.shots.length > 0) {
                         return {
                             accounts: [{
                                 id: crypto.randomUUID(),
                                 name: "Legacy Account",
                                 size: 50000,
                                 status: "active",
-                                shots: persistedState.shots,
+                                shots: state.shots,
                                 createdAt: new Date().toISOString()
                             }],
-                            activeAccountId: persistedState.shots.length > 0 ? persistedState.accounts?.[0]?.id || null : null
+                            activeAccountId: state.shots.length > 0 ? state.accounts?.[0]?.id || null : null
                         };
                     }
                 }
