@@ -121,6 +121,9 @@ if (fs.existsSync('ESTRATEGIA 2.csv')) {
         
         if (!date) return;
         
+        // ONLY KEEP ORDER FLOW RELATED ROWS FROM THIS CSV
+        if (row.Strategy !== 'Order Flow' && row.Strategy !== 'ORDER FLOW') return;
+
         const outcome = row.Result === 'BE' ? 'BE' : (row.Result === 'TP' ? 'TP' : 'SL');
         const netProfit = parseFloat(row['Net P&L']) || 0;
 
@@ -136,36 +139,30 @@ if (fs.existsSync('ESTRATEGIA 2.csv')) {
             imageLink: '',
             account: 'BACK TESTING',
             instrument: row.Asset || 'MNQ',
-            strategy: row.Strategy || 'Other',
+            strategy: 'ORDER FLOW', // Normalized name
             notes: (row.Notes || '').replace(/^"/, '').replace(/"$/, '').trim()
         };
 
         processedTrades.push(baseTrade);
 
-        // Handle Order Flow variants if desired
-        if (row.Strategy === 'Order Flow') {
-            // 1:1.5 Variant
-            let v15Outcome = outcome;
-            let v15Profit = netProfit;
-            
-            if (outcome === 'TP') {
-                v15Profit = netProfit / 2;
-            } else if (outcome === 'BE') {
-                v15Outcome = 'TP';
-                v15Profit = 748.80; // Standardized for the variant as it's a "simulated" win
-            }
-
-            processedTrades.push({
-                ...baseTrade,
-                strategy: 'ORDER FLOW 1.5',
-                outcome: v15Outcome,
-                netProfit: v15Profit,
-                notes: (baseTrade.notes + ' (Variant 1.5)').trim()
-            });
-
-            // Rename original for clarity in selector
-            baseTrade.strategy = 'ORDER FLOW 1:3';
+        // 1:1.5 Variant
+        let v15Outcome = outcome;
+        let v15Profit = netProfit;
+        
+        if (outcome === 'TP') {
+            v15Profit = netProfit / 2;
+        } else if (outcome === 'BE') {
+            v15Outcome = 'TP';
+            v15Profit = 748.80; // Standardized for the variant
         }
+
+        processedTrades.push({
+            ...baseTrade,
+            strategy: 'ORDER FLOW 1.5',
+            outcome: v15Outcome,
+            netProfit: v15Profit,
+            notes: (baseTrade.notes + ' (Variant 1.5)').trim()
+        });
     });
 }
 
