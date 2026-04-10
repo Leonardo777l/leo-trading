@@ -9,8 +9,7 @@ import {
     Settings2, 
     TrendingUp, 
     History,
-    AlertTriangle,
-    ArrowRight
+    AlertTriangle
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 
@@ -37,7 +36,6 @@ export const RiskCalculator = () => {
     const [accountSize, setAccountSize] = useState(50000);
     const [maxDrawdown, setMaxDrawdown] = useState(2000);
     const [mode, setMode] = useState<Mode>('Normal');
-    const [isSettingsOpen, setIsSettingsOpen] = useState(false);
 
     // Operational State
     const [currentLevel, setCurrentLevel] = useState(1);
