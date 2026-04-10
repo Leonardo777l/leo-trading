@@ -21,8 +21,8 @@ export const QuickAddTrade = ({ isOpen, onClose }: QuickAddTradeProps) => {
     const [date, setDate] = useState(format(new Date(), 'yyyy-MM-dd'));
     const [direction, setDirection] = useState<Direction>('Long');
     const [outcome, setOutcome] = useState<Outcome>('TP');
-    const [targetTicksInput, setTargetTicksInput] = useState<number | ''>('');
-    const [stopTicksInput, setStopTicksInput] = useState<number | ''>('');
+    const [targetPointsInput, setTargetPointsInput] = useState<number | ''>('');
+    const [stopPointsInput, setStopPointsInput] = useState<number | ''>('');
     const [imageLink, setImageLink] = useState('');
     const account = 'BACK TESTING';
     const [instrument, setInstrument] = useState('MNQ');
@@ -52,8 +52,8 @@ export const QuickAddTrade = ({ isOpen, onClose }: QuickAddTradeProps) => {
     const instrumentInfo = useMemo(() => getInstrumentInfo(instrument), [instrument]);
     const { tickValue, comm, ticksPerPoint } = instrumentInfo;
 
-    const calculatedTicksTarget = targetTicksInput ? Math.round(Number(targetTicksInput)) : 0;
-    const calculatedStopTicks = stopTicksInput ? Math.round(Number(stopTicksInput)) : 0;
+    const calculatedTicksTarget = targetPointsInput ? Math.round(Number(targetPointsInput) * ticksPerPoint) : 0;
+    const calculatedStopTicks = stopPointsInput ? Math.round(Number(stopPointsInput) * ticksPerPoint) : 0;
     
     let calculatedContracts = 1;
     if (calculatedStopTicks > 0) {
@@ -61,8 +61,8 @@ export const QuickAddTrade = ({ isOpen, onClose }: QuickAddTradeProps) => {
         if (calculatedContracts < 1) calculatedContracts = 1;
     }
 
-    const targetPoints = calculatedTicksTarget / ticksPerPoint;
-    const stopPoints = calculatedStopTicks / ticksPerPoint;
+    const targetPoints = Number(targetPointsInput) || 0;
+    const stopPoints = Number(stopPointsInput) || 0;
 
     const totalComm = calculatedContracts * comm;
     
@@ -108,8 +108,8 @@ export const QuickAddTrade = ({ isOpen, onClose }: QuickAddTradeProps) => {
             
             setIsSubmitting(false);
             onClose();
-            setTargetTicksInput('');
-            setStopTicksInput('');
+            setTargetPointsInput('');
+            setStopPointsInput('');
         } catch (error: unknown) {
             console.error(error);
             const errorMessage = error instanceof Error ? error.message : JSON.stringify(error);
@@ -194,24 +194,26 @@ export const QuickAddTrade = ({ isOpen, onClose }: QuickAddTradeProps) => {
 
                                 <div className="grid grid-cols-2 gap-4">
                                     <div className="flex flex-col gap-1.5">
-                                        <label className="text-xs text-gray-400 font-medium uppercase tracking-wider">Target (Ticks)</label>
+                                        <label className="text-xs text-gray-400 font-medium uppercase tracking-wider">Target (Puntos)</label>
                                         <input
                                             type="number"
                                             min="0"
-                                            value={targetTicksInput}
-                                            onChange={(e) => setTargetTicksInput(e.target.value ? Number(e.target.value) : '')}
-                                            placeholder="e.g. 100"
+                                            step="0.25"
+                                            value={targetPointsInput}
+                                            onChange={(e) => setTargetPointsInput(e.target.value ? Number(e.target.value) : '')}
+                                            placeholder="e.g. 25"
                                             className="bg-gunmetal-800 border border-gunmetal-700 rounded-lg px-3 py-2 text-sm text-white focus:outline-none focus:border-target/50 transition-colors"
                                         />
                                     </div>
                                     <div className="flex flex-col gap-1.5">
-                                        <label className="text-xs text-gray-400 font-medium uppercase tracking-wider">Stop (Ticks)</label>
+                                        <label className="text-xs text-gray-400 font-medium uppercase tracking-wider">Stop (Puntos)</label>
                                         <input
                                             type="number"
                                             min="0"
-                                            value={stopTicksInput}
-                                            onChange={(e) => setStopTicksInput(e.target.value ? Number(e.target.value) : '')}
-                                            placeholder="e.g. 33"
+                                            step="0.25"
+                                            value={stopPointsInput}
+                                            onChange={(e) => setStopPointsInput(e.target.value ? Number(e.target.value) : '')}
+                                            placeholder="e.g. 8.25"
                                             className="bg-gunmetal-800 border border-gunmetal-700 rounded-lg px-3 py-2 text-sm text-white focus:outline-none focus:border-target/50 transition-colors"
                                         />
                                     </div>
