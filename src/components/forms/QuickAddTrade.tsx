@@ -3,7 +3,7 @@
 import { useState, useMemo } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { X } from 'lucide-react';
-import { useTradeStore, Direction, Outcome, EstadoMental } from '@/store/useTradeStore';
+import { useTradeStore, Direction, Outcome } from '@/store/useTradeStore';
 import { Card } from '@/components/ui/Card';
 import { format } from 'date-fns';
 
@@ -21,24 +21,15 @@ export const QuickAddTrade = ({ isOpen, onClose }: QuickAddTradeProps) => {
     const [date, setDate] = useState(format(new Date(), 'yyyy-MM-dd'));
     const [direction, setDirection] = useState<Direction>('Long');
     const [outcome, setOutcome] = useState<Outcome>('TP');
-    const [targetMoney, setTargetMoney] = useState<number | ''>('');
-    const [stopMoney, setStopMoney] = useState<number | ''>('');
-    const [contracts, setContracts] = useState<number>(1);
-    const [estadoMental, setEstadoMental] = useState<EstadoMental>('Calm');
+    const [targetTicksInput, setTargetTicksInput] = useState<number | ''>('');
+    const [stopTicksInput, setStopTicksInput] = useState<number | ''>('');
     const [imageLink, setImageLink] = useState('');
-    const [account, setAccount] = useState('PERSONAL');
+    const account = 'BACK TESTING';
     const [instrument, setInstrument] = useState('MNQ');
     const [strategy, setStrategy] = useState(selectedStrategy === 'ALL' ? 'Order Flow' : selectedStrategy);
     const [notes, setNotes] = useState('');
-    const [isNewAccount, setIsNewAccount] = useState(false);
     const [isNewStrategy, setIsNewStrategy] = useState(false);
     const [isSubmitting, setIsSubmitting] = useState(false);
-
-    const activeAccounts = useMemo(() => {
-        const accounts = trades.map(t => t.account ? t.account.trim().toUpperCase() : 'PERSONAL');
-        const uniqueAccounts = Array.from(new Set(accounts));
-        return uniqueAccounts.length > 0 ? uniqueAccounts.sort() : ['PERSONAL'];
-    }, [trades]);
 
     const activeStrategies = useMemo(() => {
         const strats = trades.map(t => t.strategy ? t.strategy.trim() : 'Order Flow');
@@ -61,17 +52,35 @@ export const QuickAddTrade = ({ isOpen, onClose }: QuickAddTradeProps) => {
     const instrumentInfo = useMemo(() => getInstrumentInfo(instrument), [instrument]);
     const { tickValue, comm, ticksPerPoint } = instrumentInfo;
 
-    const calculatedTicksTarget = targetMoney ? Math.round(Number(targetMoney) / (tickValue * contracts)) : 0;
-    const calculatedStopTicks = stopMoney ? Math.round(Number(stopMoney) / (tickValue * contracts)) : 0;
+    const calculatedTicksTarget = targetTicksInput ? Math.round(Number(targetTicksInput)) : 0;
+    const calculatedStopTicks = stopTicksInput ? Math.round(Number(stopTicksInput)) : 0;
+    
+    let calculatedContracts = 1;
+    if (calculatedStopTicks > 0) {
+        calculatedContracts = Math.round(500 / (calculatedStopTicks * tickValue));
+        if (calculatedContracts < 1) calculatedContracts = 1;
+    }
+
     const targetPoints = calculatedTicksTarget / ticksPerPoint;
     const stopPoints = calculatedStopTicks / ticksPerPoint;
     
-    const totalComm = contracts * comm;
-    const estimatedPnL = outcome === 'TP' 
-        ? (Number(targetMoney) || 0) - totalComm 
-        : outcome === 'SL' 
-            ? -(Number(stopMoney) || 0) - totalComm 
-            : -totalComm;
+    const totalComm = calculatedContracts * comm;
+    
+    let estimatedPnL = 0;
+    const s = strategy.toUpperCase();
+    if (s.includes('RR NEGATIVO')) {
+        estimatedPnL = outcome === 'TP' ? 350 : outcome === 'SL' ? -500 : 0;
+    } else if (s.includes('ORDER FLOW 1.5') || s.includes('1:1.5')) {
+        estimatedPnL = outcome === 'TP' ? 750 : outcome === 'SL' ? -500 : 0;
+    } else if (s.includes('ORDER FLOW')) {
+        estimatedPnL = outcome === 'TP' ? 1500 : outcome === 'SL' ? -500 : 0;
+    } else {
+        estimatedPnL = outcome === 'TP' 
+            ? (calculatedTicksTarget * tickValue * calculatedContracts) - totalComm 
+            : outcome === 'SL' 
+                ? -(calculatedStopTicks * tickValue * calculatedContracts) - totalComm 
+                : -totalComm;
+    }
 
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
@@ -88,8 +97,8 @@ export const QuickAddTrade = ({ isOpen, onClose }: QuickAddTradeProps) => {
                 outcome,
                 ticksTarget: calculatedTicksTarget,
                 stopTicks: calculatedStopTicks,
-                contracts: Number(contracts),
-                estadoMental,
+                contracts: calculatedContracts,
+                estadoMental: 'Calm',
                 imageLink,
                 account,
                 instrument,
@@ -99,8 +108,8 @@ export const QuickAddTrade = ({ isOpen, onClose }: QuickAddTradeProps) => {
             
             setIsSubmitting(false);
             onClose();
-            setTargetMoney('');
-            setStopMoney('');
+            setTargetTicksInput('');
+            setStopTicksInput('');
         } catch (error: unknown) {
             console.error(error);
             const errorMessage = error instanceof Error ? error.message : JSON.stringify(error);
@@ -183,39 +192,26 @@ export const QuickAddTrade = ({ isOpen, onClose }: QuickAddTradeProps) => {
                                     </div>
                                 </div>
 
-                                <div className="grid grid-cols-3 gap-4">
+                                <div className="grid grid-cols-2 gap-4">
                                     <div className="flex flex-col gap-1.5">
-                                        <label className="text-xs text-gray-400 font-medium uppercase tracking-wider">Target ($)</label>
+                                        <label className="text-xs text-gray-400 font-medium uppercase tracking-wider">Target (Ticks)</label>
                                         <input
                                             type="number"
                                             min="0"
-                                            step="0.01"
-                                            value={targetMoney}
-                                            onChange={(e) => setTargetMoney(e.target.value ? Number(e.target.value) : '')}
-                                            placeholder="Obtained ($)"
+                                            value={targetTicksInput}
+                                            onChange={(e) => setTargetTicksInput(e.target.value ? Number(e.target.value) : '')}
+                                            placeholder="e.g. 100"
                                             className="bg-gunmetal-800 border border-gunmetal-700 rounded-lg px-3 py-2 text-sm text-white focus:outline-none focus:border-target/50 transition-colors"
                                         />
                                     </div>
                                     <div className="flex flex-col gap-1.5">
-                                        <label className="text-xs text-gray-400 font-medium uppercase tracking-wider">Stop ($)</label>
+                                        <label className="text-xs text-gray-400 font-medium uppercase tracking-wider">Stop (Ticks)</label>
                                         <input
                                             type="number"
                                             min="0"
-                                            step="0.01"
-                                            value={stopMoney}
-                                            onChange={(e) => setStopMoney(e.target.value ? Number(e.target.value) : '')}
-                                            placeholder="Risked ($)"
-                                            className="bg-gunmetal-800 border border-gunmetal-700 rounded-lg px-3 py-2 text-sm text-white focus:outline-none focus:border-target/50 transition-colors"
-                                        />
-                                    </div>
-                                    <div className="flex flex-col gap-1.5">
-                                        <label className="text-xs text-gray-400 font-medium uppercase tracking-wider">Contracts</label>
-                                        <input
-                                            type="number"
-                                            min="1"
-                                            required
-                                            value={contracts}
-                                            onChange={(e) => setContracts(Number(e.target.value))}
+                                            value={stopTicksInput}
+                                            onChange={(e) => setStopTicksInput(e.target.value ? Number(e.target.value) : '')}
+                                            placeholder="e.g. 33"
                                             className="bg-gunmetal-800 border border-gunmetal-700 rounded-lg px-3 py-2 text-sm text-white focus:outline-none focus:border-target/50 transition-colors"
                                         />
                                     </div>
@@ -234,78 +230,13 @@ export const QuickAddTrade = ({ isOpen, onClose }: QuickAddTradeProps) => {
                                             <span className="text-white font-mono">{targetPoints > 0 ? targetPoints.toFixed(2) : '0.00'} pts</span>
                                         </div>
                                         <div className="flex justify-between items-center text-sm">
-                                            <span className="text-gray-500">Stop Points:</span>
-                                            <span className="text-white font-mono">{stopPoints > 0 ? stopPoints.toFixed(2) : '0.00'} pts</span>
+                                            <span className="text-gray-500">Rec. Contracts:</span>
+                                            <span className="text-white font-mono">{calculatedContracts}</span>
                                         </div>
                                     </div>
                                 </div>
 
-                                <div className="flex flex-col gap-1.5">
-                                    <label className="text-xs text-gray-400 font-medium uppercase tracking-wider">Mental State</label>
-                                    <div className="grid grid-cols-3 gap-2">
-                                        {(['Calm', 'Anxiety', 'FOMO'] as EstadoMental[]).map((em) => (
-                                            <button
-                                                key={em}
-                                                type="button"
-                                                onClick={() => setEstadoMental(em)}
-                                                className={`py-2 rounded-lg text-sm font-medium transition-all ${estadoMental === em
-                                                    ? em === 'Calm' ? 'bg-blue-500/20 text-blue-400 border border-blue-500/50'
-                                                        : em === 'Anxiety' ? 'bg-orange-500/20 text-orange-400 border border-orange-500/50'
-                                                            : 'bg-purple-500/20 text-purple-400 border border-purple-500/50'
-                                                    : 'bg-gunmetal-800 text-gray-400 border border-gunmetal-700 hover:bg-gunmetal-700'
-                                                    }`}
-                                            >
-                                                {em}
-                                            </button>
-                                        ))}
-                                    </div>
-                                </div>
-
-                                    <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                                        {/* Account Section */}
-                                        <div className="flex flex-col gap-1.5 text-left">
-                                            <label className="text-[10px] text-gray-400 font-bold uppercase tracking-widest ml-1">Account</label>
-                                            {isNewAccount ? (
-                                                <div className="flex gap-2">
-                                                    <input
-                                                        type="text"
-                                                        placeholder="NEW ACCOUNT"
-                                                        value={account}
-                                                        onChange={(e) => setAccount(e.target.value.toUpperCase())}
-                                                        className="w-full bg-gunmetal-800 border border-gunmetal-700 rounded-lg px-3 py-2 text-sm text-white focus:outline-none focus:border-target/50 transition-colors uppercase"
-                                                        autoFocus
-                                                    />
-                                                    <button
-                                                        type="button"
-                                                        onClick={() => {
-                                                            setIsNewAccount(false);
-                                                            setAccount(activeAccounts[0] || 'PERSONAL');
-                                                        }}
-                                                        className="px-3 bg-gunmetal-800 border border-gunmetal-700 hover:bg-gunmetal-700 rounded-lg text-gray-400 transition-colors flex items-center justify-center shrink-0"
-                                                    >
-                                                        <X className="w-4 h-4" />
-                                                    </button>
-                                                </div>
-                                            ) : (
-                                                <select
-                                                    value={activeAccounts.includes(account) ? account : (activeAccounts[0] || 'PERSONAL')}
-                                                    onChange={(e) => {
-                                                        if (e.target.value === 'NEW') {
-                                                            setAccount('');
-                                                            setIsNewAccount(true);
-                                                        } else {
-                                                            setAccount(e.target.value);
-                                                        }
-                                                    }}
-                                                    className="bg-gunmetal-800 border border-gunmetal-700 rounded-lg px-3 py-2 text-sm text-white focus:outline-none focus:border-target/50 transition-colors cursor-pointer uppercase"
-                                                >
-                                                    {activeAccounts.map(acc => (
-                                                        <option key={acc} value={acc}>{acc}</option>
-                                                    ))}
-                                                    <option value="NEW">+ ADD NEW ACCOUNT</option>
-                                                </select>
-                                            )}
-                                        </div>
+                                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
 
                                         {/* Instrument Section */}
                                         <div className="flex flex-col gap-1.5 text-left">
