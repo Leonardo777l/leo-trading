@@ -81,8 +81,11 @@ if (fs.existsSync('RR NEGATIVO.csv')) {
         const image = (row.IMAGEN || '').replace(/^"/, '').replace(/"$/, '').trim();
         const notes = (row.COMENTARIOS || '').replace(/^"/, '').replace(/"$/, '').trim();
 
-        // 50k base organic calculation if net profit not explicitly provided
-        let netProfit = parseFloat((50000 * (percentage / 100)).toFixed(2));
+        // Standardized 1% Risk calculation
+        let netProfit = 0;
+        if (outcome === 'TP') netProfit = 350;
+        else if (outcome === 'SL') netProfit = -500;
+        else netProfit = 0;
 
         const baseTrade = {
             date,
@@ -101,9 +104,9 @@ if (fs.existsSync('RR NEGATIVO.csv')) {
         };
 
         if (percentage === 1.4) {
-            // Split as before
-            processedTrades.push({ ...baseTrade, netProfit: netProfit / 2, notes: (notes + ' (Split 1/2)').trim() });
-            processedTrades.push({ ...baseTrade, netProfit: netProfit / 2, notes: (notes + ' (Split 2/2)').trim() });
+            // Split as before - but with standardized values
+            processedTrades.push({ ...baseTrade, netProfit: 175, notes: (notes + ' (Split 1/2)').trim() });
+            processedTrades.push({ ...baseTrade, netProfit: 175, notes: (notes + ' (Split 2/2)').trim() });
         } else {
             processedTrades.push(baseTrade);
         }
@@ -125,7 +128,12 @@ if (fs.existsSync('ESTRATEGIA 2.csv')) {
         if (row.Strategy !== 'Order Flow' && row.Strategy !== 'ORDER FLOW') return;
 
         const outcome = row.Result === 'BE' ? 'BE' : (row.Result === 'TP' ? 'TP' : 'SL');
-        const netProfit = parseFloat(row['Net P&L']) || 0;
+        
+        // Standardized 1:3 values
+        let netProfit = 0;
+        if (outcome === 'TP') netProfit = 1500;
+        else if (outcome === 'SL') netProfit = -500;
+        else netProfit = 0;
 
         const baseTrade = {
             date,
@@ -147,13 +155,15 @@ if (fs.existsSync('ESTRATEGIA 2.csv')) {
 
         // 1:1.5 Variant
         let v15Outcome = outcome;
-        let v15Profit = netProfit;
+        let v15Profit = 0;
         
         if (outcome === 'TP') {
-            v15Profit = netProfit / 2;
+            v15Profit = 750; // Standardized
         } else if (outcome === 'BE') {
             v15Outcome = 'TP';
-            v15Profit = 748.80; // Standardized for the variant
+            v15Profit = 750; // In this variant, BE in 1:3 is often a TP in 1:1.5
+        } else if (outcome === 'SL') {
+            v15Profit = -500;
         }
 
         processedTrades.push({

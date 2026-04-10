@@ -128,7 +128,11 @@ export const useTradeStore = create<TradeState>((set, get) => ({
             .order('date', { ascending: true });
             
         if (!error && data) {
-            set({ trades: data as Trade[] });
+            const normalizedTrades = (data as Trade[]).map(t => ({
+                ...t,
+                netProfit: calculateNetProfit(t.outcome, t.ticksTarget, t.stopTicks, t.contracts, t.instrument, t.strategy)
+            }));
+            set({ trades: normalizedTrades });
         } else if (error) {
             console.error('Failed to fetch trades:', error);
         }
