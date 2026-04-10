@@ -5,6 +5,7 @@ import { Target, AlertOctagon, TrendingDown, DollarSign, ListChecks, ArrowDownCi
 import { DashboardLayout } from '@/components/layout/DashboardLayout';
 import { QuickAddTrade } from '@/components/forms/QuickAddTrade';
 import { useBitacoraStore } from '@/store/useBitacoraStore';
+import { ResponsiveContainer, AreaChart, Area, XAxis, YAxis, Tooltip, ReferenceLine } from 'recharts';
 
 export default function RulesPage() {
     const [isQuickAddOpen, setIsQuickAddOpen] = useState(false);
@@ -54,9 +55,43 @@ export default function RulesPage() {
     const displayBal = initialBal + netProfitLogged;
     // Basic static MLL tracking for visual
     const displayMll = initialMll; 
+    const passTarget = initialBal + 3000;
 
     const currentDrawdownRoom = displayBal - displayMll;
     const healthPercent = Math.max(0, Math.min(100, (currentDrawdownRoom / 2000) * 100));
+    
+    const currentProfit = displayBal - initialBal;
+    const progressPercent = Math.max(0, Math.min(100, (currentProfit / 3000) * 100));
+
+    // Stats
+    const winRate = shots.length > 0 ? (targetsCount / shots.length) * 100 : 0;
+    
+    let currentStreak = 0;
+    let isWinStreak = true;
+    for (let i = shots.length - 1; i >= 0; i--) {
+        const s = shots[i];
+        if (s.outcome === null) continue;
+        if (currentStreak === 0) {
+            isWinStreak = s.outcome === 'target';
+            currentStreak = 1;
+        } else {
+            if ((isWinStreak && s.outcome === 'target') || (!isWinStreak && s.outcome === 'stop')) {
+                currentStreak++;
+            } else {
+                break;
+            }
+        }
+    }
+
+    // Chart Data
+    // We recreate the balance curve point by point
+    const chartData = [ { shot: 0, balance: initialBal } ];
+    let runningBalance = initialBal;
+    shots.forEach((s, i) => {
+        if (s.outcome === 'target') runningBalance += assumedWinAmount;
+        else if (s.outcome === 'stop') runningBalance -= assumedLossAmount;
+        chartData.push({ shot: i + 1, balance: runningBalance });
+    });
 
     const handleAddAccount = (e: React.FormEvent) => {
         e.preventDefault();
@@ -249,37 +284,98 @@ export default function RulesPage() {
                                             </div>
                                         )}
 
-                                        {/* DASHBOARD DE CUENTA */}
-                                        <div className={`grid grid-cols-1 md:grid-cols-2 gap-4 mb-4 ${isReadOnly ? 'opacity-70' : ''}`}>
-                                            <div className="bg-gunmetal-950/50 border border-gunmetal-800 p-5 rounded-2xl flex flex-col relative overflow-hidden">
+                                        {/* DASHBOARD DE CUENTA APROBADA/REPROBADA */}
+                                        <div className={`grid grid-cols-2 md:grid-cols-4 gap-4 mb-4 ${isReadOnly ? 'opacity-70' : ''}`}>
+                                            <div className="bg-gunmetal-950/50 border border-gunmetal-800 p-4 rounded-2xl flex flex-col relative overflow-hidden">
                                                 {activeAccount.status === 'passed' && <div className="absolute inset-0 bg-target/5" />}
-                                                <p className="text-xs text-gray-500 uppercase font-bold tracking-widest mb-1 relative z-10">Balance Actual (Est.)</p>
-                                                <p className="text-3xl font-black text-white font-mono relative z-10">
+                                                <p className="text-[10px] text-gray-500 uppercase font-bold tracking-widest mb-1 relative z-10">Balance Actual</p>
+                                                <p className="text-xl md:text-2xl font-black text-white font-mono relative z-10">
                                                     ${displayBal.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
                                                 </p>
                                             </div>
-                                            <div className="bg-gunmetal-950/50 border border-gunmetal-800 p-5 rounded-2xl flex flex-col relative overflow-hidden">
+                                            <div className="bg-gunmetal-950/50 border border-gunmetal-800 p-4 rounded-2xl flex flex-col relative overflow-hidden">
+                                                <p className="text-[10px] text-gray-500 uppercase font-bold tracking-widest mb-1 relative z-10">Win Rate</p>
+                                                <p className="text-xl md:text-2xl font-black text-white font-mono relative z-10">
+                                                    {winRate.toFixed(1)}%
+                                                </p>
+                                            </div>
+                                            <div className="bg-gunmetal-950/50 border border-gunmetal-800 p-4 rounded-2xl flex flex-col relative overflow-hidden">
+                                                <p className="text-[10px] text-gray-500 uppercase font-bold tracking-widest mb-1 relative z-10">Racha Actual</p>
+                                                <p className={`text-xl md:text-2xl font-black font-mono relative z-10 ${currentStreak > 0 ? (isWinStreak ? 'text-target' : 'text-stop') : 'text-gray-500'}`}>
+                                                    {currentStreak > 0 ? `${currentStreak} ${isWinStreak ? 'W' : 'L'}` : '-'}
+                                                </p>
+                                            </div>
+                                            <div className="bg-gunmetal-950/50 border border-gunmetal-800 p-4 rounded-2xl flex flex-col relative overflow-hidden">
                                                 {activeAccount.status === 'failed' && <div className="absolute inset-0 bg-stop/5" />}
-                                                <p className="text-xs text-gray-500 uppercase font-bold tracking-widest mb-1 relative z-10">Max Loss Limit (MLL)</p>
-                                                <p className="text-3xl font-black text-red-500/80 font-mono relative z-10">
+                                                <p className="text-[10px] text-gray-500 uppercase font-bold tracking-widest mb-1 relative z-10">Max Loss Lim</p>
+                                                <p className="text-xl md:text-2xl font-black text-red-500/80 font-mono relative z-10">
                                                     ${displayMll.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
                                                 </p>
                                             </div>
                                         </div>
 
-                                        {/* BARRA DE SALUD (DRAWDOWN) */}
-                                        <div className={`mb-6 ${isReadOnly ? 'opacity-70' : ''}`}>
-                                            <div className="flex justify-between text-xs font-bold mb-2">
-                                                <span className="text-gray-400 uppercase tracking-widest">Colchón Disponible</span>
-                                                <span className={currentDrawdownRoom > 500 ? 'text-target' : 'text-red-500'}>
-                                                    ${currentDrawdownRoom.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
-                                                </span>
+                                        {/* GRAFICO EQUITY CURVE */}
+                                        <div className={`h-40 w-full mb-6 ${isReadOnly ? 'opacity-70' : ''}`}>
+                                            <ResponsiveContainer width="100%" height="100%">
+                                                <AreaChart data={chartData} margin={{ top: 5, right: 0, left: 0, bottom: 0 }}>
+                                                    <defs>
+                                                        <linearGradient id="colorBalanceRules" x1="0" y1="0" x2="0" y2="1">
+                                                            <stop offset="5%" stopColor={displayBal >= initialBal ? "#00FF00" : "#FF0000"} stopOpacity={0.3}/>
+                                                            <stop offset="95%" stopColor={displayBal >= initialBal ? "#00FF00" : "#FF0000"} stopOpacity={0}/>
+                                                        </linearGradient>
+                                                    </defs>
+                                                    <XAxis dataKey="shot" hide />
+                                                    <YAxis domain={['dataMin - 100', 'dataMax + 100']} hide />
+                                                    <Tooltip 
+                                                        contentStyle={{ backgroundColor: '#1A1D24', border: '1px solid #2D313A', borderRadius: '8px' }}
+                                                        itemStyle={{ color: '#fff', fontWeight: 'bold' }}
+                                                        formatter={(value: number) => [`$${value.toFixed(2)}`, 'Balance']}
+                                                        labelFormatter={(label) => `Tiro #${label}`}
+                                                    />
+                                                    <ReferenceLine y={initialBal} stroke="#4B5563" strokeDasharray="3 3" />
+                                                    <Area 
+                                                        type="stepAfter" 
+                                                        dataKey="balance" 
+                                                        stroke={displayBal >= initialBal ? "#00FF00" : "#FF0000"} 
+                                                        strokeWidth={2}
+                                                        fillOpacity={1} 
+                                                        fill="url(#colorBalanceRules)" 
+                                                    />
+                                                </AreaChart>
+                                            </ResponsiveContainer>
+                                        </div>
+
+                                        {/* BARRAS DE PROGRESO */}
+                                        <div className={`mb-6 grid grid-cols-1 md:grid-cols-2 gap-6 ${isReadOnly ? 'opacity-70' : ''}`}>
+                                            {/* BARRA DE SALUD (DRAWDOWN) */}
+                                            <div>
+                                                <div className="flex justify-between text-xs font-bold mb-2">
+                                                    <span className="text-gray-400 uppercase tracking-widest">Colchón Disponible</span>
+                                                    <span className={currentDrawdownRoom > 500 ? 'text-target' : 'text-red-500'}>
+                                                        ${currentDrawdownRoom.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} / $2,000
+                                                    </span>
+                                                </div>
+                                                <div className="h-4 w-full bg-gunmetal-950 rounded-full overflow-hidden border border-gunmetal-700/50 p-0.5 relative">
+                                                    <div 
+                                                        className={`h-full rounded-full transition-all duration-700 ease-out ${activeAccount.status === 'passed' ? 'bg-target' : activeAccount.status === 'failed' ? 'bg-stop' : healthPercent > 50 ? 'bg-blue-500' : healthPercent > 25 ? 'bg-yellow-500' : 'bg-red-500'}`}
+                                                        style={{ width: `${healthPercent}%` }}
+                                                    />
+                                                </div>
                                             </div>
-                                            <div className="h-4 w-full bg-gunmetal-950 rounded-full overflow-hidden border border-gunmetal-700/50 p-0.5 relative">
-                                                <div 
-                                                    className={`h-full rounded-full transition-all duration-700 ease-out ${activeAccount.status === 'passed' ? 'bg-target' : activeAccount.status === 'failed' ? 'bg-stop' : healthPercent > 50 ? 'bg-blue-500' : healthPercent > 25 ? 'bg-yellow-500' : 'bg-red-500'}`}
-                                                    style={{ width: `${healthPercent}%` }}
-                                                />
+                                            {/* BARRA DE PROGRESO (TARGET) */}
+                                            <div>
+                                                <div className="flex justify-between text-xs font-bold mb-2">
+                                                    <span className="text-gray-400 uppercase tracking-widest">Progreso de Pase</span>
+                                                    <span className="text-target">
+                                                        {progressPercent.toFixed(1)}% (${currentProfit > 0 ? currentProfit.toLocaleString('en-US') : '0'})
+                                                    </span>
+                                                </div>
+                                                <div className="h-4 w-full bg-gunmetal-950 rounded-full overflow-hidden border border-gunmetal-700/50 p-0.5 relative">
+                                                    <div 
+                                                        className={`h-full rounded-full transition-all duration-700 ease-out bg-target`}
+                                                        style={{ width: `${progressPercent}%` }}
+                                                    />
+                                                </div>
                                             </div>
                                         </div>
 
