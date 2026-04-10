@@ -132,21 +132,21 @@ export const useBitacoraStore = create<BitacoraState>()(
             name: 'funded-accounts-storage',
             version: 1,
             migrate: (persistedState: unknown, version) => {
-                if (version === 0) {
+                if (version === 0 && persistedState && typeof persistedState === 'object') {
                     // Try to migrate legacy shots into a default account if they exist
-                    const state = persistedState as any;
-                    if (state && state.shots && state.shots.length > 0) {
+                    const state = persistedState as Record<string, unknown>;
+                    if (state.shots && Array.isArray(state.shots) && state.shots.length > 0) {
                         return {
                             accounts: [{
                                 id: crypto.randomUUID(),
                                 name: "Legacy Account",
                                 size: 50000,
                                 status: "active",
-                                shots: state.shots,
+                                shots: state.shots as Shot[],
                                 createdAt: new Date().toISOString()
                             }],
-                            activeAccountId: state.shots.length > 0 ? state.accounts?.[0]?.id || null : null
-                        };
+                            activeAccountId: null
+                        } as BitacoraState;
                     }
                 }
                 return persistedState;
