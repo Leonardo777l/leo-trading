@@ -327,7 +327,7 @@ export default function RulesPage() {
                                                     <Tooltip 
                                                         contentStyle={{ backgroundColor: '#1A1D24', border: '1px solid #2D313A', borderRadius: '8px' }}
                                                         itemStyle={{ color: '#fff', fontWeight: 'bold' }}
-                                                        formatter={(value: number) => [`$${value.toFixed(2)}`, 'Balance']}
+                                                        formatter={(value: unknown) => [`$${Number(value).toFixed(2)}`, 'Balance']}
                                                         labelFormatter={(label) => `Tiro #${label}`}
                                                     />
                                                     <ReferenceLine y={initialBal} stroke="#4B5563" strokeDasharray="3 3" />

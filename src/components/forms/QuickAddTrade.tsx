@@ -50,7 +50,7 @@ export const QuickAddTrade = ({ isOpen, onClose }: QuickAddTradeProps) => {
     };
 
     const instrumentInfo = useMemo(() => getInstrumentInfo(instrument), [instrument]);
-    const { tickValue, comm } = instrumentInfo;
+    const { tickValue, comm, ticksPerPoint } = instrumentInfo;
 
     const calculatedTicksTarget = targetTicksInput ? Math.round(Number(targetTicksInput)) : 0;
     const calculatedStopTicks = stopTicksInput ? Math.round(Number(stopTicksInput)) : 0;
@@ -60,6 +60,9 @@ export const QuickAddTrade = ({ isOpen, onClose }: QuickAddTradeProps) => {
         calculatedContracts = Math.round(500 / (calculatedStopTicks * tickValue));
         if (calculatedContracts < 1) calculatedContracts = 1;
     }
+
+    const targetPoints = calculatedTicksTarget / ticksPerPoint;
+    const stopPoints = calculatedStopTicks / ticksPerPoint;
 
     const totalComm = calculatedContracts * comm;
     
@@ -227,8 +230,12 @@ export const QuickAddTrade = ({ isOpen, onClose }: QuickAddTradeProps) => {
                                             <span className="text-white font-mono">{targetPoints > 0 ? targetPoints.toFixed(2) : '0.00'} pts</span>
                                         </div>
                                         <div className="flex justify-between items-center text-sm">
-                                            <span className="text-gray-500">Rec. Contracts:</span>
-                                            <span className="text-white font-mono">{calculatedContracts}</span>
+                                            <span className="text-gray-500">Stop Points:</span>
+                                            <span className="text-white font-mono">{stopPoints > 0 ? stopPoints.toFixed(2) : '0.00'} pts</span>
+                                        </div>
+                                        <div className="flex justify-between items-center text-sm col-span-2 pt-1 border-t border-gunmetal-800">
+                                            <span className="text-gray-500 font-bold">Rec. Contracts (-$500 Risk):</span>
+                                            <span className="text-blue-400 font-mono font-bold text-lg">{calculatedContracts}</span>
                                         </div>
                                     </div>
                                 </div>
