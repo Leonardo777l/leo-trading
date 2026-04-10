@@ -21,6 +21,7 @@ export default function RulesPage() {
         deleteAccount,
         addShotToActive, 
         updateShotInActive, 
+        updateShotPnlInActive,
         deleteShotFromActive, 
         resetShotsInActive 
     } = useBitacoraStore();
@@ -44,13 +45,17 @@ export default function RulesPage() {
     const riskPerEntry = 150;
 
     const targetsCount = shots.filter(s => s.outcome === 'target').length;
-    const stopsCount = shots.filter(s => s.outcome === 'stop').length;
     
     // Abstract static assumed R:R 1:1.5 
     const assumedWinAmount = riskPerEntry * 1.5;
     const assumedLossAmount = riskPerEntry;
     
-    const netProfitLogged = (targetsCount * assumedWinAmount) - (stopsCount * assumedLossAmount);
+    const netProfitLogged = shots.reduce((sum, s) => {
+        if (s.pnl !== undefined) return sum + s.pnl;
+        if (s.outcome === 'target') return sum + assumedWinAmount;
+        if (s.outcome === 'stop') return sum - assumedLossAmount;
+        return sum;
+    }, 0);
 
     const displayBal = initialBal + netProfitLogged;
     // Basic static MLL tracking for visual
@@ -86,8 +91,12 @@ export default function RulesPage() {
     const chartData = [ { shot: 0, balance: initialBal } ];
     let runningBalance = initialBal;
     shots.forEach((s, i) => {
-        if (s.outcome === 'target') runningBalance += assumedWinAmount;
-        else if (s.outcome === 'stop') runningBalance -= assumedLossAmount;
+        if (s.pnl !== undefined) {
+            runningBalance += s.pnl;
+        } else {
+            if (s.outcome === 'target') runningBalance += assumedWinAmount;
+            else if (s.outcome === 'stop') runningBalance -= assumedLossAmount;
+        }
         chartData.push({ shot: i + 1, balance: runningBalance });
     });
 
@@ -482,6 +491,21 @@ export default function RulesPage() {
                                                                         <ArrowDownCircle className="w-4 h-4" />
                                                                         STOP
                                                                     </button>
+                                                                </div>
+                                                                
+                                                                <div className={`flex items-center gap-1 bg-gunmetal-900 border border-gunmetal-700/50 rounded-lg px-2 py-1 flex-1 max-w-[120px] transition-opacity ${isReadOnly ? 'opacity-50' : ''}`}>
+                                                                    <span className="text-xs font-bold text-gray-500">$</span>
+                                                                    <input 
+                                                                        type="number"
+                                                                        disabled={isReadOnly}
+                                                                        defaultValue={shot.pnl !== undefined ? shot.pnl : ''}
+                                                                        onBlur={(e) => {
+                                                                            const val = e.target.value;
+                                                                            updateShotPnlInActive(shot.id, val ? Number(val) : undefined);
+                                                                        }}
+                                                                        placeholder={shot.outcome === 'target' ? '225' : shot.outcome === 'stop' ? '-150' : '0.00'}
+                                                                        className="bg-transparent w-full text-sm font-mono font-bold text-white outline-none placeholder:text-gray-600 disabled:cursor-not-allowed"
+                                                                    />
                                                                 </div>
                                                             </div>
                                                             

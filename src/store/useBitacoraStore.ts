@@ -6,6 +6,7 @@ export type ShotOutcome = 'target' | 'stop' | null;
 export interface Shot {
     id: string;
     outcome: ShotOutcome;
+    pnl?: number;
     date: string; // ISO string
 }
 
@@ -33,6 +34,7 @@ interface BitacoraState {
     // Shot Actions (applies to activeAccountId)
     addShotToActive: (outcome: ShotOutcome) => void;
     updateShotInActive: (shotId: string, outcome: ShotOutcome) => void;
+    updateShotPnlInActive: (shotId: string, pnl: number | undefined) => void;
     deleteShotFromActive: (shotId: string) => void;
     resetShotsInActive: () => void;
 }
@@ -94,6 +96,21 @@ export const useBitacoraStore = create<BitacoraState>()(
                             return {
                                 ...acc,
                                 shots: acc.shots.map(shot => shot.id === shotId ? { ...shot, outcome } : shot)
+                            };
+                        }
+                        return acc;
+                    })
+                };
+            }),
+            
+            updateShotPnlInActive: (shotId, pnl) => set((state) => {
+                if (!state.activeAccountId) return state;
+                return {
+                    accounts: state.accounts.map(acc => {
+                        if (acc.id === state.activeAccountId) {
+                            return {
+                                ...acc,
+                                shots: acc.shots.map(shot => shot.id === shotId ? { ...shot, pnl } : shot)
                             };
                         }
                         return acc;
