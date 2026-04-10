@@ -41,7 +41,33 @@ interface TradeState {
     heavyReseed: (trades: Omit<Trade, 'id'>[]) => Promise<void>;
 }
 
-const calculateNetProfit = (outcome: Outcome, ticks: number, stop: number, contracts: number, instrument?: string) => {
+const calculateNetProfit = (outcome: Outcome, ticks: number, stop: number, contracts: number, instrument?: string, strategy?: string) => {
+    // ----------------------------------------------------
+    // FIXED 1% RISK MATH ($500 base per 50k acct)
+    // ----------------------------------------------------
+    const s = (strategy || '').toUpperCase();
+    
+    if (s.includes('RR NEGATIVO')) {
+        if (outcome === 'TP') return 350;
+        if (outcome === 'SL') return -500;
+        return 0;
+    }
+    
+    if (s.includes('ORDER FLOW 1.5') || s.includes('1:1.5')) {
+        if (outcome === 'TP') return 750;
+        if (outcome === 'SL') return -500;
+        return 0;
+    }
+    
+    if (s.includes('ORDER FLOW')) { // Default 1:3 Order Flow
+        if (outcome === 'TP') return 1500;
+        if (outcome === 'SL') return -500;
+        return 0;
+    }
+
+    // ----------------------------------------------------
+    // FALLBACK MATH (for instruments lacking strict fixed logic)
+    // ----------------------------------------------------
     let tickValue = 0.50; // Default MNQ
     let commissionPerContract = 1.20; // Default MNQ
 
@@ -101,7 +127,12 @@ export const useTradeStore = create<TradeState>((set, get) => ({
             .order('date', { ascending: true });
             
         if (!error && data) {
-            set({ trades: data as Trade[] });
+            // Recalculate netProfit dynamically for historical backtesting math
+            const sanitizedTrades = (data as Trade[]).map(t => ({
+                ...t,
+                netProfit: calculateNetProfit(t.outcome, t.ticksTarget, t.stopTicks, t.contracts, t.instrument, t.strategy)
+            }));
+            set({ trades: sanitizedTrades });
         } else if (error) {
             console.error('Failed to fetch trades:', error);
         }
@@ -142,8 +173,8 @@ export const useTradeStore = create<TradeState>((set, get) => ({
         const { user } = get();
         if (!user) return;
 
-        const netProfit = calculateNetProfit(tradeInput.outcome, tradeInput.ticksTarget, tradeInput.stopTicks, tradeInput.contracts, tradeInput.instrument);
         const resolvedStrategy = tradeInput.strategy ? tradeInput.strategy.trim() : get().selectedStrategy;
+        const netProfit = calculateNetProfit(tradeInput.outcome, tradeInput.ticksTarget, tradeInput.stopTicks, tradeInput.contracts, tradeInput.instrument, resolvedStrategy);
             
         const newTrade = {
             ...tradeInput,
@@ -168,8 +199,8 @@ export const useTradeStore = create<TradeState>((set, get) => ({
         const newTrades = tradesInput.map(t => ({
             ...t,
             account: t.account?.trim().toUpperCase() || 'PERSONAL',
-            netProfit: calculateNetProfit(t.outcome, t.ticksTarget, t.stopTicks, t.contracts, t.instrument),
             strategy: t.strategy ? t.strategy.trim() : get().selectedStrategy,
+            netProfit: calculateNetProfit(t.outcome, t.ticksTarget, t.stopTicks, t.contracts, t.instrument, t.strategy ? t.strategy.trim() : get().selectedStrategy),
             user_id: user.id
         }));
 
