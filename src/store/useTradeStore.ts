@@ -38,8 +38,6 @@ interface TradeState {
     signOut: () => Promise<void>;
     setUser: (user: User | null) => void;
     setSelectedStrategy: (strategy: string) => void;
-    heavyReseed: (trades: Omit<Trade, 'id'>[]) => Promise<void>;
-    masterRestoration: (trades: Omit<Trade, 'id'>[]) => Promise<void>;
 }
 
 const calculateNetProfit = (outcome: Outcome, ticks: number, stop: number, contracts: number, instrument?: string, strategy?: string) => {
@@ -138,68 +136,7 @@ export const useTradeStore = create<TradeState>((set, get) => ({
         }
         set({ isLoading: false });
     },
-    heavyReseed: async (tradesInput) => {
-        const { user, selectedStrategy } = get();
-        if (!user || selectedStrategy === 'ALL') return;
 
-        set({ isLoading: true });
-        console.log(`STARTING HEAVY RESEED for ${selectedStrategy}: Deleting existing trades for this strategy...`);
-        
-        // 1. Delete ONLY trades of the current workspace
-        const { error: delError } = await supabase.from('trades').delete().eq('user_id', user.id).eq('strategy', selectedStrategy);
-        if (delError) {
-            console.error('Failed to clear trades for this strategy:', delError);
-            set({ isLoading: false });
-            return;
-        }
-
-        console.log(`Inserting ${tradesInput.length} new trades...`);
-        // 2. Batch Insert
-        for (let i = 0; i < tradesInput.length; i += 50) {
-            const batch = tradesInput.slice(i, i + 50).map(t => ({ 
-                ...t, 
-                user_id: user.id,
-                strategy: selectedStrategy // Ensure they stay in the right workspace
-            }));
-            const { error: insError } = await supabase.from('trades').insert(batch);
-            if (insError) console.error(`Failed to insert batch ${i}:`, insError);
-        }
-
-        console.log('Reseed complete.');
-        await get().fetchTrades();
-        set({ isLoading: false });
-    },
-    masterRestoration: async (tradesInput) => {
-        const { user } = get();
-        if (!user) return;
-
-        set({ isLoading: true });
-        console.log('STARTING MASTER RESTORATION: Clearing all backtesting trades...');
-        
-        // 1. Delete ALL trades for the user
-        const { error: delError } = await supabase.from('trades').delete().eq('user_id', user.id);
-        
-        if (delError) {
-            console.error('Failed to clear trades for restoration:', delError);
-            set({ isLoading: false });
-            return;
-        }
-
-        console.log(`Inserting ${tradesInput.length} restored trades...`);
-        // 2. Batch Insert
-        for (let i = 0; i < tradesInput.length; i += 50) {
-            const batch = tradesInput.slice(i, i + 50).map(t => ({ 
-                ...t, 
-                user_id: user.id
-            }));
-            const { error: insError } = await supabase.from('trades').insert(batch);
-            if (insError) console.error(`Failed to insert restoration batch ${i}:`, insError);
-        }
-
-        console.log('Restoration complete.');
-        await get().fetchTrades();
-        set({ isLoading: false });
-    },
     addTrade: async (tradeInput) => {
         const { user } = get();
         if (!user) return;
