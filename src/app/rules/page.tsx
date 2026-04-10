@@ -242,7 +242,7 @@ export default function RulesPage() {
                                                     <select
                                                         value={activeAccountId || ''}
                                                         onChange={(e) => setActiveAccount(e.target.value)}
-                                                        className="appearance-none bg-gunmetal-950 border border-gunmetal-700 text-white font-bold text-sm px-4 py-2 rounded-xl focus:outline-none focus:border-blue-500 flex-1 md:flex-none cursor-pointer"
+                                                        className="appearance-none bg-gunmetal-800 border border-gunmetal-700 text-white font-bold text-sm px-4 py-2 rounded-xl focus:outline-none focus:border-blue-500 flex-1 md:flex-none cursor-pointer"
                                                     >
                                                         {accounts.map(acc => (
                                                             <option key={acc.id} value={acc.id}>
@@ -284,26 +284,26 @@ export default function RulesPage() {
 
                                         {/* DASHBOARD DE CUENTA APROBADA/REPROBADA */}
                                         <div className={`grid grid-cols-2 md:grid-cols-4 gap-4 mb-4 ${isReadOnly ? 'opacity-70' : ''}`}>
-                                            <div className="bg-gunmetal-950/50 border border-gunmetal-800 p-4 rounded-2xl flex flex-col relative overflow-hidden">
+                                            <div className="bg-black/20 border border-gunmetal-800 p-4 rounded-2xl flex flex-col relative overflow-hidden">
                                                 {activeAccount.status === 'passed' && <div className="absolute inset-0 bg-target/5" />}
                                                 <p className="text-[10px] text-gray-500 uppercase font-bold tracking-widest mb-1 relative z-10">Balance Actual</p>
                                                 <p className="text-xl md:text-2xl font-black text-white font-mono relative z-10">
                                                     ${displayBal.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
                                                 </p>
                                             </div>
-                                            <div className="bg-gunmetal-950/50 border border-gunmetal-800 p-4 rounded-2xl flex flex-col relative overflow-hidden">
+                                            <div className="bg-black/20 border border-gunmetal-800 p-4 rounded-2xl flex flex-col relative overflow-hidden">
                                                 <p className="text-[10px] text-gray-500 uppercase font-bold tracking-widest mb-1 relative z-10">Win Rate</p>
                                                 <p className="text-xl md:text-2xl font-black text-white font-mono relative z-10">
                                                     {winRate.toFixed(1)}%
                                                 </p>
                                             </div>
-                                            <div className="bg-gunmetal-950/50 border border-gunmetal-800 p-4 rounded-2xl flex flex-col relative overflow-hidden">
+                                            <div className="bg-black/20 border border-gunmetal-800 p-4 rounded-2xl flex flex-col relative overflow-hidden">
                                                 <p className="text-[10px] text-gray-500 uppercase font-bold tracking-widest mb-1 relative z-10">Racha Actual</p>
                                                 <p className={`text-xl md:text-2xl font-black font-mono relative z-10 ${currentStreak > 0 ? (isWinStreak ? 'text-target' : 'text-stop') : 'text-gray-500'}`}>
                                                     {currentStreak > 0 ? `${currentStreak} ${isWinStreak ? 'W' : 'L'}` : '-'}
                                                 </p>
                                             </div>
-                                            <div className="bg-gunmetal-950/50 border border-gunmetal-800 p-4 rounded-2xl flex flex-col relative overflow-hidden">
+                                            <div className="bg-black/20 border border-gunmetal-800 p-4 rounded-2xl flex flex-col relative overflow-hidden">
                                                 {activeAccount.status === 'failed' && <div className="absolute inset-0 bg-stop/5" />}
                                                 <p className="text-[10px] text-gray-500 uppercase font-bold tracking-widest mb-1 relative z-10">Max Loss Lim</p>
                                                 <p className="text-xl md:text-2xl font-black text-red-500/80 font-mono relative z-10">
@@ -353,7 +353,7 @@ export default function RulesPage() {
                                                         ${currentDrawdownRoom.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} / $2,000
                                                     </span>
                                                 </div>
-                                                <div className="h-4 w-full bg-gunmetal-950 rounded-full overflow-hidden border border-gunmetal-700/50 p-0.5 relative">
+                                                <div className="h-4 w-full bg-black/20 rounded-full overflow-hidden border border-gunmetal-700/50 p-0.5 relative">
                                                     <div 
                                                         className={`h-full rounded-full transition-all duration-700 ease-out ${activeAccount.status === 'passed' ? 'bg-target' : activeAccount.status === 'failed' ? 'bg-stop' : healthPercent > 50 ? 'bg-blue-500' : healthPercent > 25 ? 'bg-yellow-500' : 'bg-red-500'}`}
                                                         style={{ width: `${healthPercent}%` }}
@@ -368,7 +368,7 @@ export default function RulesPage() {
                                                         {progressPercent.toFixed(1)}% (${currentProfit > 0 ? currentProfit.toLocaleString('en-US') : '0'})
                                                     </span>
                                                 </div>
-                                                <div className="h-4 w-full bg-gunmetal-950 rounded-full overflow-hidden border border-gunmetal-700/50 p-0.5 relative">
+                                                <div className="h-4 w-full bg-black/20 rounded-full overflow-hidden border border-gunmetal-700/50 p-0.5 relative">
                                                     <div 
                                                         className={`h-full rounded-full transition-all duration-700 ease-out bg-target`}
                                                         style={{ width: `${progressPercent}%` }}
