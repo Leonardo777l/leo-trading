@@ -1,8 +1,8 @@
 'use client';
 
-import { useMemo, useState } from 'react';
+import { useState } from 'react';
 import { useTradeStore } from '@/store/useTradeStore';
-import { Database, Plus, Check, ChevronDown } from 'lucide-react';
+import { Database, Check, ChevronDown } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 
 interface DatabaseSwitcherProps {
@@ -10,10 +10,8 @@ interface DatabaseSwitcherProps {
 }
 
 export const DatabaseSwitcher = ({ variant = 'sidebar' }: DatabaseSwitcherProps) => {
-    const { trades, selectedStrategy, setSelectedStrategy } = useTradeStore();
+    const { selectedStrategy, setSelectedStrategy } = useTradeStore();
     const [isOpen, setIsOpen] = useState(false);
-    const [isCreating, setIsCreating] = useState(false);
-    const [newDbName, setNewDbName] = useState('');
 
     const availableDatabases = ['ORDER FLOW 1:3', 'ORDER FLOW 1.5', 'RR NEGATIVO'];
 
