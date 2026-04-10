@@ -7,9 +7,25 @@ import { TradesTable } from '@/components/dashboard/TradesTable';
 import { TimelineFeed } from '@/components/dashboard/TimelineFeed';
 import { CsvUploader } from '@/components/import/CsvUploader';
 import { QuickAddTrade } from '@/components/forms/QuickAddTrade';
+import { useTradeStore } from '@/store/useTradeStore';
+import { RefreshCw } from 'lucide-react';
 
 export default function TradesPage() {
     const [isQuickAddOpen, setIsQuickAddOpen] = useState(false);
+    const { masterRestoration, isLoading } = useTradeStore();
+
+    const handleRestore = async () => {
+        if(!confirm('¿Estás seguro de RE-IMPORTAR toda la data original? Esto borrará tus trades actuales de backtesting para poner los del Excel corregidos (sin fines de semana y con montos reales).')) return;
+        try {
+            const res = await fetch('/restored_backtesting.json');
+            const data = await res.json();
+            await masterRestoration(data);
+            alert('¡Data restaurada con éxito!');
+        } catch (e) {
+            console.error(e);
+            alert('Error al restaurar la data. Asegúrate de que el archivo JSON esté generado.');
+        }
+    };
 
 
     return (
@@ -34,6 +50,15 @@ export default function TradesPage() {
                                 </p>
                             </div>
                             <div className="flex items-center gap-4">
+                                <button
+                                    onClick={handleRestore}
+                                    disabled={isLoading}
+                                    className="bg-gunmetal-800 hover:bg-gunmetal-700 text-gray-400 hover:text-white px-4 py-2 rounded-xl text-xs font-bold border border-gunmetal-700 transition-all flex items-center gap-2"
+                                    title="Restaurar data original desde CSV"
+                                >
+                                    <RefreshCw className={`w-3 h-3 ${isLoading ? 'animate-spin' : ''}`} />
+                                    RESTAURAR ORIGINALES
+                                </button>
                                 <DatabaseSwitcher variant="header" />
                             </div>
                         </header>

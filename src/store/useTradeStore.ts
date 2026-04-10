@@ -39,6 +39,7 @@ interface TradeState {
     setUser: (user: User | null) => void;
     setSelectedStrategy: (strategy: string) => void;
     heavyReseed: (trades: Omit<Trade, 'id'>[]) => Promise<void>;
+    masterRestoration: (trades: Omit<Trade, 'id'>[]) => Promise<void>;
 }
 
 const calculateNetProfit = (outcome: Outcome, ticks: number, stop: number, contracts: number, instrument?: string, strategy?: string) => {
@@ -127,12 +128,7 @@ export const useTradeStore = create<TradeState>((set, get) => ({
             .order('date', { ascending: true });
             
         if (!error && data) {
-            // Recalculate netProfit dynamically for historical backtesting math
-            const sanitizedTrades = (data as Trade[]).map(t => ({
-                ...t,
-                netProfit: calculateNetProfit(t.outcome, t.ticksTarget, t.stopTicks, t.contracts, t.instrument, t.strategy)
-            }));
-            set({ trades: sanitizedTrades });
+            set({ trades: data as Trade[] });
         } else if (error) {
             console.error('Failed to fetch trades:', error);
         }
@@ -166,6 +162,37 @@ export const useTradeStore = create<TradeState>((set, get) => ({
         }
 
         console.log('Reseed complete.');
+        await get().fetchTrades();
+        set({ isLoading: false });
+    },
+    masterRestoration: async (tradesInput) => {
+        const { user } = get();
+        if (!user) return;
+
+        set({ isLoading: true });
+        console.log('STARTING MASTER RESTORATION: Clearing all backtesting trades...');
+        
+        // 1. Delete ALL trades for the user
+        const { error: delError } = await supabase.from('trades').delete().eq('user_id', user.id);
+        
+        if (delError) {
+            console.error('Failed to clear trades for restoration:', delError);
+            set({ isLoading: false });
+            return;
+        }
+
+        console.log(`Inserting ${tradesInput.length} restored trades...`);
+        // 2. Batch Insert
+        for (let i = 0; i < tradesInput.length; i += 50) {
+            const batch = tradesInput.slice(i, i + 50).map(t => ({ 
+                ...t, 
+                user_id: user.id
+            }));
+            const { error: insError } = await supabase.from('trades').insert(batch);
+            if (insError) console.error(`Failed to insert restoration batch ${i}:`, insError);
+        }
+
+        console.log('Restoration complete.');
         await get().fetchTrades();
         set({ isLoading: false });
     },
