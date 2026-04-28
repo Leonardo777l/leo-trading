@@ -101,21 +101,6 @@ export const DatabaseSwitcher = ({ variant = 'sidebar' }: DatabaseSwitcherProps)
                                 ))}
                             </div>
 
-                            <button
-                                onClick={async () => {
-                                    if (confirm('¿Seguro que deseas ELIMINAR toda la data vieja de ORDER FLOW 1.5? Esta acción no se puede deshacer.')) {
-                                        setIsDeleting(true);
-                                        await deleteTradesByStrategy('1.5');
-                                        setIsDeleting(false);
-                                        alert('Datos de la versión 1.5 eliminados correctamente.');
-                                        setIsOpen(false);
-                                    }
-                                }}
-                                disabled={isDeleting}
-                                className="w-full mt-2 flex items-center justify-center px-3 py-1.5 rounded-lg text-[10px] font-black tracking-widest bg-red-500/10 text-red-500 hover:bg-red-500/20 transition-all border border-red-500/20"
-                            >
-                                {isDeleting ? 'BORRANDO...' : 'BORRAR DATA VIEJA (1.5)'}
-                            </button>
                         </motion.div>
                     </>
                 )}
