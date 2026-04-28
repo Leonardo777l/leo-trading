@@ -16,6 +16,11 @@ export interface FundedAccount {
     id: string;
     name: string;
     size: number;
+    drawdownLimit: number;
+    isEOD: boolean;
+    stopRisk: number;
+    targetRisk: number;
+    passTarget: number;
     status: AccountStatus;
     shots: Shot[];
     createdAt: string;
@@ -26,7 +31,7 @@ interface BitacoraState {
     activeAccountId: string | null;
     
     // Account Actions
-    addAccount: (name: string, size: number) => void;
+    addAccount: (name: string, size: number, drawdownLimit: number, isEOD: boolean, stopRisk: number, targetRisk: number, passTarget: number) => void;
     setActiveAccount: (id: string | null) => void;
     updateAccountStatus: (id: string, status: AccountStatus) => void;
     deleteAccount: (id: string) => void;
@@ -45,11 +50,16 @@ export const useBitacoraStore = create<BitacoraState>()(
             accounts: [],
             activeAccountId: null,
 
-            addAccount: (name, size) => set((state) => {
+            addAccount: (name, size, drawdownLimit, isEOD, stopRisk, targetRisk, passTarget) => set((state) => {
                 const newAccount: FundedAccount = {
                     id: crypto.randomUUID(),
                     name,
                     size,
+                    drawdownLimit,
+                    isEOD,
+                    stopRisk,
+                    targetRisk,
+                    passTarget,
                     status: 'active',
                     shots: [],
                     createdAt: new Date().toISOString()
