@@ -23,37 +23,47 @@ export default function AccountsPage() {
 
     // New Account Form State
     const [newName, setNewName] = useState('');
-    const [newType, setNewType] = useState<'Topstep' | 'Lucid Flex' | 'My Funded Futures'>('Topstep');
+    const [newType, setNewType] = useState<'Topstep' | 'Lucid Flex' | 'My Funded Futures' | 'Custom'>('Topstep');
     const [newBalance, setNewBalance] = useState(50000);
+    const [newDrawdownLimit, setNewDrawdownLimit] = useState(2000);
+    const [newProfitTarget, setNewProfitTarget] = useState(3000);
+    const [newDrawdownType, setNewDrawdownType] = useState<'EOD' | 'Static' | 'Trailing'>('EOD');
+
+    // Auto-fill defaults when changing preset dropdowns
+    useEffect(() => {
+        if (newType === 'Custom') return; // Don't override custom on balance change
+        
+        if (newType === 'Topstep') {
+            if (newBalance === 50000) { setNewDrawdownLimit(2000); setNewProfitTarget(3000); }
+            else if (newBalance === 100000) { setNewDrawdownLimit(3000); setNewProfitTarget(6000); }
+            else if (newBalance === 150000) { setNewDrawdownLimit(4500); setNewProfitTarget(9000); }
+            setNewDrawdownType('EOD');
+        } else if (newType === 'Lucid Flex') {
+            if (newBalance === 50000) { setNewDrawdownLimit(2500); setNewProfitTarget(3000); }
+            else { setNewDrawdownLimit(newBalance * 0.05); setNewProfitTarget(newBalance * 0.06); }
+            setNewDrawdownType('Static');
+        } else if (newType === 'My Funded Futures') {
+            if (newBalance === 50000) { setNewDrawdownLimit(2000); setNewProfitTarget(3000); }
+            else { setNewDrawdownLimit(newBalance * 0.04); setNewProfitTarget(newBalance * 0.06); }
+            setNewDrawdownType('EOD');
+        }
+    }, [newType, newBalance]);
 
     const handleCreateAccount = (e: React.FormEvent) => {
         e.preventDefault();
         
-        let drawdownLimit = 2000;
-        let profitTarget = 3000;
-        let drawdownType: 'EOD' | 'Static' | 'Trailing' = 'EOD';
         let maxDrawdownCap = undefined;
-
-        if (newType === 'Topstep') {
-            if (newBalance === 50000) { drawdownLimit = 2000; profitTarget = 3000; }
-            if (newBalance === 100000) { drawdownLimit = 3000; profitTarget = 6000; }
-            if (newBalance === 150000) { drawdownLimit = 4500; profitTarget = 9000; }
-            drawdownType = 'EOD';
-        } else if (newType === 'Lucid Flex') {
-            if (newBalance === 50000) { drawdownLimit = 2500; profitTarget = 3000; } // Assuming typical numbers
-            drawdownType = 'Static';
-        } else if (newType === 'My Funded Futures') {
-            if (newBalance === 50000) { drawdownLimit = 2000; profitTarget = 3000; maxDrawdownCap = newBalance + 100; }
-            drawdownType = 'EOD';
+        if (newType === 'My Funded Futures') {
+            maxDrawdownCap = newBalance + 100; // Hardcoded MFF cap rule
         }
 
         addAccount({
-            name: newName || `${newType} ${newBalance / 1000}K`,
+            name: newName || `${newType !== 'Custom' ? newType : 'Firm'} ${newBalance / 1000}K`,
             type: newType,
             balance: newBalance,
-            drawdownLimit,
-            drawdownType,
-            profitTarget,
+            drawdownLimit: newDrawdownLimit,
+            drawdownType: newDrawdownType,
+            profitTarget: newProfitTarget,
             maxDrawdownCap,
             isActive: true
         });
@@ -102,27 +112,42 @@ export default function AccountsPage() {
 
                     {isCreating && (
                         <Card className="border border-target/50">
-                            <form onSubmit={handleCreateAccount} className="flex flex-col gap-4">
+                            <form onSubmit={handleCreateAccount} className="flex flex-col gap-5">
                                 <h3 className="text-lg font-bold text-white">Create New Challenge / Live Account</h3>
-                                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
                                     <div className="flex flex-col gap-1">
                                         <label className="text-xs text-gray-500 font-semibold uppercase">Nickname</label>
                                         <input type="text" value={newName} onChange={e => setNewName(e.target.value)} placeholder="e.g. TF Eval 1" className="bg-gunmetal-900 border border-gunmetal-700 rounded-lg p-2.5 text-white text-sm" />
                                     </div>
                                     <div className="flex flex-col gap-1">
                                         <label className="text-xs text-gray-500 font-semibold uppercase">Firm / Ruleset</label>
-                                        <select value={newType} onChange={(e) => setNewType(e.target.value as 'Topstep' | 'Lucid Flex' | 'My Funded Futures')} className="bg-gunmetal-900 border border-gunmetal-700 rounded-lg p-2.5 text-white text-sm">
-                                            <option value="Topstep">Topstep (EOD Drawdown)</option>
-                                            <option value="My Funded Futures">My Funded Futures (EOD Trailing to +$100)</option>
-                                            <option value="Lucid Flex">Lucid Flex (Static Drawdown)</option>
+                                        <select value={newType} onChange={(e) => setNewType(e.target.value as 'Topstep' | 'Lucid Flex' | 'My Funded Futures' | 'Custom')} className="bg-gunmetal-900 border border-gunmetal-700 rounded-lg p-2.5 text-white text-sm focus:border-target">
+                                            <option value="Topstep">Topstep</option>
+                                            <option value="My Funded Futures">My Funded Futures</option>
+                                            <option value="Lucid Flex">Lucid Flex</option>
+                                            <option value="Custom">Custom / Other</option>
                                         </select>
                                     </div>
                                     <div className="flex flex-col gap-1">
-                                        <label className="text-xs text-gray-500 font-semibold uppercase">Account Size</label>
-                                        <select value={newBalance} onChange={(e) => setNewBalance(Number(e.target.value))} className="bg-gunmetal-900 border border-gunmetal-700 rounded-lg p-2.5 text-white text-sm">
-                                            <option value={50000}>$50,000</option>
-                                            <option value={100000}>$100,000</option>
-                                            <option value={150000}>$150,000</option>
+                                        <label className="text-xs text-gray-500 font-semibold uppercase">Starting Balance ($)</label>
+                                        <input type="number" value={newBalance} onChange={(e) => setNewBalance(Number(e.target.value))} className="bg-gunmetal-900 border border-gunmetal-700 rounded-lg p-2.5 text-white text-sm focus:border-target" />
+                                    </div>
+                                </div>
+                                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                                     <div className="flex flex-col gap-1">
+                                        <label className="text-xs text-gray-500 font-semibold uppercase">Profit Target ($)</label>
+                                        <input type="number" value={newProfitTarget} onChange={(e) => setNewProfitTarget(Number(e.target.value))} className="bg-gunmetal-900 border border-gunmetal-700 rounded-lg p-2.5 text-white text-sm focus:border-target" />
+                                    </div>
+                                    <div className="flex flex-col gap-1">
+                                        <label className="text-xs text-gray-500 font-semibold uppercase">Max Drawdown Limit ($)</label>
+                                        <input type="number" value={newDrawdownLimit} onChange={(e) => setNewDrawdownLimit(Number(e.target.value))} className="bg-gunmetal-900 border border-stop/50 rounded-lg p-2.5 text-white text-sm focus:border-stop" />
+                                    </div>
+                                    <div className="flex flex-col gap-1">
+                                        <label className="text-xs text-gray-500 font-semibold uppercase">Drawdown Type</label>
+                                        <select value={newDrawdownType} onChange={(e) => setNewDrawdownType(e.target.value as 'EOD' | 'Static' | 'Trailing')} className="bg-gunmetal-900 border border-gunmetal-700 rounded-lg p-2.5 text-white text-sm focus:border-target">
+                                            <option value="EOD">End-of-Day (EOD)</option>
+                                            <option value="Static">Static / Fixed</option>
+                                            <option value="Trailing">Intraday Trailing</option>
                                         </select>
                                     </div>
                                 </div>
