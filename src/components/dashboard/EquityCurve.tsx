@@ -57,27 +57,19 @@ export const EquityCurve = () => {
             <div className="flex-1 w-full h-full relative">
                 <ResponsiveContainer width="100%" height="100%">
                     <LineChart data={chartData} margin={{ top: 10, right: 10, left: 30, bottom: 25 }}>
-                        <defs>
-                            <filter id="glow" x="-20%" y="-20%" width="140%" height="140%">
-                                <feGaussianBlur stdDeviation="4" result="blur" />
-                                <feMerge>
-                                    <feMergeNode in="blur" />
-                                    <feMergeNode in="SourceGraphic" />
-                                </feMerge>
-                            </filter>
-                        </defs>
-                        <CartesianGrid strokeDasharray="3 3" stroke="#2a2a2a" vertical={false} />
+                        <CartesianGrid strokeDasharray="3 3" stroke="#27272A" vertical={false} />
                         <XAxis
                             dataKey="name"
-                            stroke="#666"
-                            fontSize={12}
+                            stroke="#555"
+                            fontSize={11}
                             tickLine={false}
                             axisLine={false}
                             minTickGap={30}
+                            dy={10}
                         />
                         <YAxis
-                            stroke="#666"
-                            fontSize={12}
+                            stroke="#555"
+                            fontSize={11}
                             width={70}
                             tickLine={false}
                             axisLine={false}
@@ -86,27 +78,26 @@ export const EquityCurve = () => {
                         />
                         <Tooltip
                             contentStyle={{
-                                backgroundColor: '#121212',
-                                border: '1px solid rgba(255,255,255,0.1)',
-                                borderRadius: '12px',
+                                backgroundColor: '#131316',
+                                border: '1px solid #27272A',
+                                borderRadius: '8px',
                                 color: '#fff',
                                 boxShadow: '0 4px 20px rgba(0,0,0,0.5)'
                             }}
-                            itemStyle={{ color: '#00C805' }}
+                            itemStyle={{ color: '#00D632' }}
                             labelStyle={{ color: '#888', marginBottom: '4px' }}
                             // eslint-disable-next-line @typescript-eslint/no-explicit-any
                             formatter={(value: any) => [`$${Number(value).toFixed(2)}`, 'Acumulado']}
                         />
-                        <ReferenceLine y={0} stroke="#444" strokeDasharray="3 3" />
+                        <ReferenceLine y={0} stroke="#555" strokeDasharray="3 3" />
                         <Line
                             type="monotone"
                             dataKey="cumulative"
-                            stroke="#00C805"
+                            stroke="#00D632"
                             strokeWidth={3}
                             dot={{ r: 0 }}
-                            activeDot={{ r: 6, fill: '#00C805', stroke: '#000', strokeWidth: 2 }}
-                            filter="url(#glow)"
-                            animationDuration={1500}
+                            activeDot={{ r: 5, fill: '#00D632', stroke: '#131316', strokeWidth: 2 }}
+                            animationDuration={1000}
                             animationEasing="ease-out"
                         />
                     </LineChart>

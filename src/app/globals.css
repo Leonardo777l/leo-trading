@@ -3,11 +3,11 @@
 @tailwind utilities;
 
 :root {
-  --background: #000000;
-  --foreground: #ffffff;
-  --gunmetal-900: #121212;
-  --gunmetal-800: #1a1a1a;
-  --gunmetal-700: #2a2a2a;
+  --background: #09090B;
+  --foreground: #FAFAFA;
+  --gunmetal-900: #131316;
+  --gunmetal-800: #1C1C21;
+  --gunmetal-700: #27272A;
 }
 
 body {
@@ -31,11 +31,11 @@ body {
   }
 
   .custom-scrollbar::-webkit-scrollbar-thumb {
-    background: rgba(255, 255, 255, 0.1);
+    background: var(--gunmetal-700);
     border-radius: 10px;
   }
 
   .custom-scrollbar::-webkit-scrollbar-thumb:hover {
-    background: rgba(255, 255, 255, 0.2);
+    background: #3F3F46;
   }
 }

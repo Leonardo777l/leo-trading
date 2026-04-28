@@ -6,9 +6,9 @@ import { useMemo } from 'react';
 import { PieChart, Pie, Cell, ResponsiveContainer, Tooltip, Legend } from 'recharts';
 
 const COLORS = {
-    TP: '#00C805', // Target
-    SL: '#FF0032', // Stop
-    BE: '#3B82F6'  // Break Even
+    TP: '#00D632', // Target
+    SL: '#FF334B', // Stop
+    BE: '#FFBF00'  // Break Even
 };
 
 export const WinLossDistributionChart = () => {
@@ -68,7 +68,7 @@ export const WinLossDistributionChart = () => {
                             ))}
                         </Pie>
                         <Tooltip
-                            contentStyle={{ backgroundColor: '#111827', border: '1px solid #1F2937', borderRadius: '8px' }}
+                            contentStyle={{ backgroundColor: '#131316', border: '1px solid #27272A', borderRadius: '8px' }}
                             itemStyle={{ color: '#fff', fontSize: '12px', fontWeight: 'bold' }}
                             // eslint-disable-next-line @typescript-eslint/no-explicit-any
                             formatter={(value: any) => [`${value} Trades`, '']}

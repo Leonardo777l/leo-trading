@@ -44,17 +44,13 @@ export const DashboardLayout = ({ children, leftSidebar, rightSidebar, onQuickAd
     }
 
     return (
-        <div className="min-h-screen bg-black text-foreground font-sans overflow-hidden selection:bg-target/30 relative">
-            {/* Background ambient glow */}
-            <div className="fixed top-[-20%] left-[-10%] w-[50%] h-[50%] rounded-full bg-target/5 blur-[150px] pointer-events-none" />
-            <div className="fixed bottom-[-20%] right-[-10%] w-[50%] h-[50%] rounded-full bg-gunmetal-700/10 blur-[150px] pointer-events-none" />
+        <div className="min-h-screen bg-background text-foreground font-sans overflow-hidden selection:bg-target/30 relative flex flex-col md:flex-row">
+            {/* Global Navigation Shell */}
+            <div className="flex-shrink-0 flex md:flex-col h-auto md:h-screen w-full md:w-20 border-r border-[#1a1a1c]">
+                <SidebarNav />
+            </div>
 
-            <main className="relative z-10 h-screen w-screen p-4 md:p-6 lg:p-8 flex flex-col md:flex-row gap-6">
-
-                {/* Global Navigation Shell */}
-                <div className="flex-shrink-0 flex md:flex-col h-auto md:h-full">
-                    <SidebarNav />
-                </div>
+            <main className="relative z-10 flex-1 h-screen flex gap-6 overflow-hidden bg-[#0A0A0B] p-4 md:p-6 lg:px-8 lg:py-6">
 
                 {/* Left Sidebar - Timeline usually */}
                 {leftSidebar && (

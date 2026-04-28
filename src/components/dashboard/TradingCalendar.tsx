@@ -103,13 +103,13 @@ export const TradingCalendar = () => {
                     {dayData ? (
                         <div className={`w-full text-center rounded-lg px-1 py-1.5 mt-auto flex flex-col items-center justify-center transition-all duration-300
                             ${dayData.netProfit >= 0
-                                ? 'bg-gradient-to-b from-target/20 to-target/5 border border-target/40 shadow-[inset_0_1px_4px_rgba(0,200,5,0.3)]'
-                                : 'bg-gradient-to-b from-stop/20 to-stop/5 border border-stop/40 shadow-[inset_0_1px_4px_rgba(255,0,50,0.3)]'}
+                                ? 'bg-[#00D632]/10 border border-[#00D632]/20'
+                                : 'bg-[#FF334B]/10 border border-[#FF334B]/20'}
                         `}>
-                            <span className={`text-[13px] font-black tracking-tight ${dayData.netProfit >= 0 ? 'text-target drop-shadow-[0_0_10px_rgba(0,200,5,1)]' : 'text-stop drop-shadow-[0_0_10px_rgba(255,0,50,1)]'}`}>
+                            <span className={`text-[13px] font-black tracking-tight ${dayData.netProfit >= 0 ? 'text-[#00D632]' : 'text-[#FF334B]'}`}>
                                 {dayData.netProfit >= 0 ? '+' : '-'}${Math.abs(dayData.netProfit).toFixed(2)}
                             </span>
-                            <span className="text-[10px] text-gray-400 mt-0.5 opacity-0 group-hover:opacity-100 transition-opacity absolute bottom-1 font-medium bg-gunmetal-900/95 px-2 py-0.5 border border-gunmetal-700 rounded-md shadow-lg z-10">
+                            <span className="text-[10px] text-gray-500 mt-0.5 opacity-0 group-hover:opacity-100 transition-opacity absolute bottom-1 font-medium bg-[#1C1C21] px-2 py-0.5 border border-[#27272A] rounded-md shadow-lg z-10">
                                 {dayData.count} trade{dayData.count !== 1 ? 's' : ''}
                             </span>
                         </div>
