@@ -39,19 +39,7 @@ export const QuickAddTrade = ({ isOpen, onClose, defaultAccount }: QuickAddTrade
         return unique.sort();
     }, [trades]);
 
-    const getInstrumentInfo = (inst: string) => {
-        switch (inst.toUpperCase()) {
-            case 'ES': return { tickValue: 12.50, comm: 4.10, ticksPerPoint: 4 };
-            case 'MES': return { tickValue: 1.25, comm: 1.20, ticksPerPoint: 4 };
-            case 'CL': return { tickValue: 10.00, comm: 4.50, ticksPerPoint: 100 }; 
-            case 'GC': return { tickValue: 10.00, comm: 4.50, ticksPerPoint: 10 }; 
-            case 'MNQ':
-            default: return { tickValue: 0.50, comm: 1.20, ticksPerPoint: 4 };
-        }
-    };
 
-    const instrumentInfo = useMemo(() => getInstrumentInfo(instrument), [instrument]);
-    const { tickValue, comm, ticksPerPoint } = instrumentInfo;
 
     const targetUsd = Number(targetUsdInput) || 0;
     const stopUsd = Number(stopUsdInput) || 0;

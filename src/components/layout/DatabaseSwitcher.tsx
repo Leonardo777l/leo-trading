@@ -10,9 +10,9 @@ interface DatabaseSwitcherProps {
 }
 
 export const DatabaseSwitcher = ({ variant = 'sidebar' }: DatabaseSwitcherProps) => {
-    const { selectedStrategy, setSelectedStrategy, deleteTradesByStrategy } = useTradeStore();
+    const { selectedStrategy, setSelectedStrategy } = useTradeStore();
     const [isOpen, setIsOpen] = useState(false);
-    const [isDeleting, setIsDeleting] = useState(false);
+
 
     const availableDatabases = ['ORDER FLOW 1:3', 'FIBONACCI FRACTAL', 'RR NEGATIVO'];
 

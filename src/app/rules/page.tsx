@@ -448,7 +448,7 @@ export default function RulesPage() {
                                                         <Target className="w-10 h-10 text-gray-500 mx-auto mb-3 opacity-50" />
                                                         <p className="text-sm text-gray-400 font-medium">No hay tiros registrados en esta cuenta.</p>
                                                         {!isReadOnly && (
-                                                            <p className="text-xs text-gray-500">Haz clic en '+ NUEVO TIRO' para empezar la bitácora.</p>
+                                                            <p className="text-xs text-gray-500">Haz clic en &apos;+ NUEVO TIRO&apos; para empezar la bitácora.</p>
                                                         )}
                                                     </div>
                                                 ) : (
