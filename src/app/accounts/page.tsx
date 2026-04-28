@@ -3,7 +3,7 @@
 import { useState, useMemo, useEffect } from 'react';
 import { DashboardLayout } from '@/components/layout/DashboardLayout';
 import { useTradeStore } from '@/store/useTradeStore';
-import { usePropFirmStore, PropFirmAccount } from '@/store/usePropFirmStore';
+import { usePropFirmStore } from '@/store/usePropFirmStore';
 import { computePropFirmStats } from '@/lib/propFirmLogic';
 import { Card } from '@/components/ui/Card';
 import { Plus, Wallet, Target, AlertTriangle, Play, CheckCircle2, XOctagon } from 'lucide-react';
@@ -111,7 +111,7 @@ export default function AccountsPage() {
                                     </div>
                                     <div className="flex flex-col gap-1">
                                         <label className="text-xs text-gray-500 font-semibold uppercase">Firm / Ruleset</label>
-                                        <select value={newType} onChange={(e) => setNewType(e.target.value as any)} className="bg-gunmetal-900 border border-gunmetal-700 rounded-lg p-2.5 text-white text-sm">
+                                        <select value={newType} onChange={(e) => setNewType(e.target.value as 'Topstep' | 'Lucid Flex' | 'My Funded Futures')} className="bg-gunmetal-900 border border-gunmetal-700 rounded-lg p-2.5 text-white text-sm">
                                             <option value="Topstep">Topstep (EOD Drawdown)</option>
                                             <option value="My Funded Futures">My Funded Futures (EOD Trailing to +$100)</option>
                                             <option value="Lucid Flex">Lucid Flex (Static Drawdown)</option>

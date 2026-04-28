@@ -10,9 +10,10 @@ import { format } from 'date-fns';
 interface QuickAddTradeProps {
     isOpen: boolean;
     onClose: () => void;
+    defaultAccount?: string;
 }
 
-export const QuickAddTrade = ({ isOpen, onClose }: QuickAddTradeProps) => {
+export const QuickAddTrade = ({ isOpen, onClose, defaultAccount }: QuickAddTradeProps) => {
     const addTrade = useTradeStore(state => state.addTrade);
     const selectedStrategy = useTradeStore(state => state.selectedStrategy);
     const setSelectedStrategy = useTradeStore(state => state.setSelectedStrategy); 
@@ -24,7 +25,7 @@ export const QuickAddTrade = ({ isOpen, onClose }: QuickAddTradeProps) => {
     const [targetPointsInput, setTargetPointsInput] = useState<number | ''>('');
     const [stopPointsInput, setStopPointsInput] = useState<number | ''>('');
     const [imageLink, setImageLink] = useState('');
-    const account = 'BACK TESTING';
+    const account = defaultAccount || 'PERSONAL';
     const [instrument, setInstrument] = useState('MNQ');
     const [strategy, setStrategy] = useState(selectedStrategy === 'ALL' ? 'Order Flow' : selectedStrategy);
     const [notes, setNotes] = useState('');
