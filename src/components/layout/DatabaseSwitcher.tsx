@@ -10,10 +10,11 @@ interface DatabaseSwitcherProps {
 }
 
 export const DatabaseSwitcher = ({ variant = 'sidebar' }: DatabaseSwitcherProps) => {
-    const { selectedStrategy, setSelectedStrategy } = useTradeStore();
+    const { selectedStrategy, setSelectedStrategy, deleteTradesByStrategy } = useTradeStore();
     const [isOpen, setIsOpen] = useState(false);
+    const [isDeleting, setIsDeleting] = useState(false);
 
-    const availableDatabases = ['ORDER FLOW 1:3', 'ORDER FLOW 1.5', 'RR NEGATIVO'];
+    const availableDatabases = ['ORDER FLOW 1:3', 'FIBONACCI FRACTAL', 'RR NEGATIVO'];
 
     return (
         <div className="relative group/switcher">
@@ -99,6 +100,22 @@ export const DatabaseSwitcher = ({ variant = 'sidebar' }: DatabaseSwitcherProps)
                                     </button>
                                 ))}
                             </div>
+
+                            <button
+                                onClick={async () => {
+                                    if (confirm('¿Seguro que deseas ELIMINAR toda la data vieja de ORDER FLOW 1.5? Esta acción no se puede deshacer.')) {
+                                        setIsDeleting(true);
+                                        await deleteTradesByStrategy('1.5');
+                                        setIsDeleting(false);
+                                        alert('Datos de la versión 1.5 eliminados correctamente.');
+                                        setIsOpen(false);
+                                    }
+                                }}
+                                disabled={isDeleting}
+                                className="w-full mt-2 flex items-center justify-center px-3 py-1.5 rounded-lg text-[10px] font-black tracking-widest bg-red-500/10 text-red-500 hover:bg-red-500/20 transition-all border border-red-500/20"
+                            >
+                                {isDeleting ? 'BORRANDO...' : 'BORRAR DATA VIEJA (1.5)'}
+                            </button>
                         </motion.div>
                     </>
                 )}

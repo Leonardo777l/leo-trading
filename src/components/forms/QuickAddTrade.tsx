@@ -22,8 +22,8 @@ export const QuickAddTrade = ({ isOpen, onClose, defaultAccount }: QuickAddTrade
     const [date, setDate] = useState(format(new Date(), 'yyyy-MM-dd'));
     const [direction, setDirection] = useState<Direction>('Long');
     const [outcome, setOutcome] = useState<Outcome>('TP');
-    const [targetPointsInput, setTargetPointsInput] = useState<number | ''>('');
-    const [stopPointsInput, setStopPointsInput] = useState<number | ''>('');
+    const [targetUsdInput, setTargetUsdInput] = useState<number | ''>('');
+    const [stopUsdInput, setStopUsdInput] = useState<number | ''>('');
     const [imageLink, setImageLink] = useState('');
     const account = defaultAccount || 'PERSONAL';
     const [instrument, setInstrument] = useState('MNQ');
@@ -53,34 +53,14 @@ export const QuickAddTrade = ({ isOpen, onClose, defaultAccount }: QuickAddTrade
     const instrumentInfo = useMemo(() => getInstrumentInfo(instrument), [instrument]);
     const { tickValue, comm, ticksPerPoint } = instrumentInfo;
 
-    const calculatedTicksTarget = targetPointsInput ? Math.round(Number(targetPointsInput) * ticksPerPoint) : 0;
-    const calculatedStopTicks = stopPointsInput ? Math.round(Number(stopPointsInput) * ticksPerPoint) : 0;
-    
-    let calculatedContracts = 1;
-    if (calculatedStopTicks > 0) {
-        calculatedContracts = Math.round(500 / (calculatedStopTicks * tickValue));
-        if (calculatedContracts < 1) calculatedContracts = 1;
-    }
+    const targetUsd = Number(targetUsdInput) || 0;
+    const stopUsd = Number(stopUsdInput) || 0;
 
-    const targetPoints = Number(targetPointsInput) || 0;
-    const stopPoints = Number(stopPointsInput) || 0;
-
-    const totalComm = calculatedContracts * comm;
-    
     let estimatedPnL = 0;
-    const s = strategy.toUpperCase();
-    if (s.includes('RR NEGATIVO')) {
-        estimatedPnL = outcome === 'TP' ? 350 : outcome === 'SL' ? -500 : 0;
-    } else if (s.includes('ORDER FLOW 1.5') || s.includes('1:1.5')) {
-        estimatedPnL = outcome === 'TP' ? 750 : outcome === 'SL' ? -500 : 0;
-    } else if (s.includes('ORDER FLOW')) {
-        estimatedPnL = outcome === 'TP' ? 1500 : outcome === 'SL' ? -500 : 0;
-    } else {
-        estimatedPnL = outcome === 'TP' 
-            ? (calculatedTicksTarget * tickValue * calculatedContracts) - totalComm 
-            : outcome === 'SL' 
-                ? -(calculatedStopTicks * tickValue * calculatedContracts) - totalComm 
-                : -totalComm;
+    if (outcome === 'TP') {
+        estimatedPnL = targetUsd;
+    } else if (outcome === 'SL') {
+        estimatedPnL = -stopUsd;
     }
 
     const handleSubmit = async (e: React.FormEvent) => {
@@ -96,9 +76,9 @@ export const QuickAddTrade = ({ isOpen, onClose, defaultAccount }: QuickAddTrade
                 date: new Date(safeDate).toISOString(),
                 direction,
                 outcome,
-                ticksTarget: calculatedTicksTarget,
-                stopTicks: calculatedStopTicks,
-                contracts: calculatedContracts,
+                ticksTarget: targetUsd,
+                stopTicks: stopUsd,
+                contracts: 0, // Using 0 as a flag for exact manual dollars
                 estadoMental: 'Calm',
                 imageLink,
                 account,
@@ -109,8 +89,8 @@ export const QuickAddTrade = ({ isOpen, onClose, defaultAccount }: QuickAddTrade
             
             setIsSubmitting(false);
             onClose();
-            setTargetPointsInput('');
-            setStopPointsInput('');
+            setTargetUsdInput('');
+            setStopUsdInput('');
         } catch (error: unknown) {
             console.error(error);
             const errorMessage = error instanceof Error ? error.message : JSON.stringify(error);
@@ -195,26 +175,26 @@ export const QuickAddTrade = ({ isOpen, onClose, defaultAccount }: QuickAddTrade
 
                                 <div className="grid grid-cols-2 gap-4">
                                     <div className="flex flex-col gap-1.5">
-                                        <label className="text-xs text-gray-400 font-medium uppercase tracking-wider">Target (Puntos)</label>
+                                        <label className="text-xs text-gray-400 font-medium uppercase tracking-wider">Target ($ USD)</label>
                                         <input
                                             type="number"
                                             min="0"
-                                            step="0.25"
-                                            value={targetPointsInput}
-                                            onChange={(e) => setTargetPointsInput(e.target.value ? Number(e.target.value) : '')}
-                                            placeholder="e.g. 25"
+                                            step="0.01"
+                                            value={targetUsdInput}
+                                            onChange={(e) => setTargetUsdInput(e.target.value ? Number(e.target.value) : '')}
+                                            placeholder="e.g. 1500"
                                             className="bg-gunmetal-800 border border-gunmetal-700 rounded-lg px-3 py-2 text-sm text-white focus:outline-none focus:border-target/50 transition-colors"
                                         />
                                     </div>
                                     <div className="flex flex-col gap-1.5">
-                                        <label className="text-xs text-gray-400 font-medium uppercase tracking-wider">Stop (Puntos)</label>
+                                        <label className="text-xs text-gray-400 font-medium uppercase tracking-wider">Stop ($ USD)</label>
                                         <input
                                             type="number"
                                             min="0"
-                                            step="0.25"
-                                            value={stopPointsInput}
-                                            onChange={(e) => setStopPointsInput(e.target.value ? Number(e.target.value) : '')}
-                                            placeholder="e.g. 8.25"
+                                            step="0.01"
+                                            value={stopUsdInput}
+                                            onChange={(e) => setStopUsdInput(e.target.value ? Number(e.target.value) : '')}
+                                            placeholder="e.g. 500"
                                             className="bg-gunmetal-800 border border-gunmetal-700 rounded-lg px-3 py-2 text-sm text-white focus:outline-none focus:border-target/50 transition-colors"
                                         />
                                     </div>
@@ -229,16 +209,12 @@ export const QuickAddTrade = ({ isOpen, onClose, defaultAccount }: QuickAddTrade
                                     </div>
                                     <div className="grid grid-cols-2 gap-4 mt-1">
                                         <div className="flex justify-between items-center text-sm">
-                                            <span className="text-gray-500">Target Points:</span>
-                                            <span className="text-white font-mono">{targetPoints > 0 ? targetPoints.toFixed(2) : '0.00'} pts</span>
+                                            <span className="text-gray-500">Target ($):</span>
+                                            <span className="text-white font-mono">${targetUsd.toFixed(2)}</span>
                                         </div>
                                         <div className="flex justify-between items-center text-sm">
-                                            <span className="text-gray-500">Stop Points:</span>
-                                            <span className="text-white font-mono">{stopPoints > 0 ? stopPoints.toFixed(2) : '0.00'} pts</span>
-                                        </div>
-                                        <div className="flex justify-between items-center text-sm col-span-2 pt-1 border-t border-gunmetal-800">
-                                            <span className="text-gray-500 font-bold">Rec. Contracts (-$500 Risk):</span>
-                                            <span className="text-blue-400 font-mono font-bold text-lg">{calculatedContracts}</span>
+                                            <span className="text-gray-500">Stop ($):</span>
+                                            <span className="text-white font-mono">${stopUsd.toFixed(2)}</span>
                                         </div>
                                     </div>
                                 </div>
@@ -304,7 +280,7 @@ export const QuickAddTrade = ({ isOpen, onClose, defaultAccount }: QuickAddTrade
                                                             setSelectedStrategy(e.target.value);
                                                         }
                                                     }}
-                                                    className={`bg-gunmetal-800 border border-gunmetal-700 rounded-lg px-3 py-2 text-sm focus:outline-none focus:border-target/50 transition-colors cursor-pointer font-bold ${strategy === 'ORDER FLOW 1.5' || strategy === 'RR NEGATIVO' ? 'text-target' : 'text-white'}`}
+                                                    className={`bg-gunmetal-800 border border-gunmetal-700 rounded-lg px-3 py-2 text-sm focus:outline-none focus:border-target/50 transition-colors cursor-pointer font-bold ${strategy === 'FIBONACCI FRACTAL' || strategy === 'RR NEGATIVO' ? 'text-target' : 'text-white'}`}
                                                 >
                                                     {activeStrategies.map(strat => (
                                                         <option key={strat} value={strat}>{strat.toUpperCase()}</option>

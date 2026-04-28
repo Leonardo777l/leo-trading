@@ -34,6 +34,7 @@ interface TradeState {
     bulkAddTrades: (trades: Omit<Trade, 'id' | 'netProfit'>[]) => Promise<void>;
     removeTrade: (id: string) => Promise<void>;
     clearTrades: () => Promise<void>;
+    deleteTradesByStrategy: (strategy: string) => Promise<void>;
     signInWithGoogle: () => Promise<void>;
     signOut: () => Promise<void>;
     setUser: (user: User | null) => void;
@@ -41,6 +42,15 @@ interface TradeState {
 }
 
 const calculateNetProfit = (outcome: Outcome, ticks: number, stop: number, contracts: number, instrument?: string, strategy?: string) => {
+    // ----------------------------------------------------
+    // EXACT DOLLARS OVERRIDE (contracts === 0)
+    // ----------------------------------------------------
+    if (contracts === 0) {
+        if (outcome === 'TP') return ticks; // ticksTarget holds targetUsd
+        if (outcome === 'SL') return -stop; // stopTicks holds stopUsd
+        return 0; // BE
+    }
+
     // ----------------------------------------------------
     // FIXED 1% RISK MATH ($500 base per 50k acct)
     // ----------------------------------------------------
@@ -52,7 +62,7 @@ const calculateNetProfit = (outcome: Outcome, ticks: number, stop: number, contr
         return 0;
     }
     
-    if (s.includes('ORDER FLOW 1.5') || s.includes('1:1.5')) {
+    if (s.includes('FIBONACCI FRACTAL')) {
         if (outcome === 'TP') return 750;
         if (outcome === 'SL') return -500;
         return 0;
@@ -195,6 +205,18 @@ export const useTradeStore = create<TradeState>((set, get) => ({
         const { error } = await supabase.from('trades').delete().eq('user_id', user.id);
         if (!error) {
             set({ trades: [] });
+        }
+    },
+    deleteTradesByStrategy: async (strategyToDelete) => {
+        const { user } = get();
+        if (!user) return;
+
+        // Using LIKE to catch any possible variations like ORDER FLOW 1.5, ORDER FLOW 1:1.5
+        const { error } = await supabase.from('trades').delete().eq('user_id', user.id).or(`strategy.ilike.%${strategyToDelete}%,strategy.eq.ORDER FLOW 1:1.5`);
+        if (!error) {
+            set((state) => ({ trades: state.trades.filter(t => !(t.strategy||'').toUpperCase().includes(strategyToDelete.toUpperCase()) && t.strategy !== 'ORDER FLOW 1:1.5') }));
+        } else {
+            console.error('Failed to delete trades by strategy:', error);
         }
     },
     signInWithGoogle: async () => {
