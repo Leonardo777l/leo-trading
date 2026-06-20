@@ -1,6 +1,6 @@
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
-import { LayoutDashboard, ListTree, Wallet, LogOut, BookOpenText, Calculator } from 'lucide-react';
+import { LayoutDashboard, ListTree, CalendarDays, LogOut, BookOpenText, Calculator } from 'lucide-react';
 import { useTradeStore } from '@/store/useTradeStore';
 
 export const SidebarNav = () => {
@@ -9,8 +9,8 @@ export const SidebarNav = () => {
 
     const links = [
         { href: '/', icon: LayoutDashboard, label: 'Dashboard' },
+        { href: '/day-view', icon: CalendarDays, label: 'Day View' },
         { href: '/trades', icon: ListTree, label: 'Trades & Data' },
-        { href: '/accounts', icon: Wallet, label: 'Accounts' },
         { href: '/rules', icon: BookOpenText, label: 'Reglas' },
         { href: '/risk', icon: Calculator, label: 'Riesgo' },
     ];

@@ -2,18 +2,19 @@
 
 import { useState } from 'react';
 import { DashboardLayout } from '@/components/layout/DashboardLayout';
-import { DatabaseSwitcher } from '@/components/layout/DatabaseSwitcher';
-import { StatsOverview } from '@/components/dashboard/StatsOverview';
-import { EquityCurve } from '@/components/dashboard/EquityCurve';
-import { PsychologyHeatmap } from '@/components/dashboard/PsychologyHeatmap';
-import { MonthlyReturnMatrix } from '@/components/dashboard/MonthlyReturnMatrix';
-import { WinLossDistributionChart } from '@/components/dashboard/WinLossDistributionChart';
-import { TradingCalendar } from '@/components/dashboard/TradingCalendar';
+import { TradezellaHeader } from '@/components/dashboard/TradezellaHeader';
+import { TradezellaStats } from '@/components/dashboard/TradezellaStats';
+import { ZellaScoreCard } from '@/components/dashboard/ZellaScoreCard';
+import { ProgressTrackerCard } from '@/components/dashboard/ProgressTrackerCard';
+import { DailyCumulativePnLCard } from '@/components/dashboard/DailyCumulativePnLCard';
+import { NetDailyPnLCard } from '@/components/dashboard/NetDailyPnLCard';
+import { RecentTradesCard } from '@/components/dashboard/RecentTradesCard';
+import { AccountBalanceCard } from '@/components/dashboard/AccountBalanceCard';
+import { TradezellaCalendarSection } from '@/components/dashboard/TradezellaCalendarSection';
 import { QuickAddTrade } from '@/components/forms/QuickAddTrade';
 
 export default function Home() {
   const [isQuickAddOpen, setIsQuickAddOpen] = useState(false);
-
 
   return (
     <>
@@ -21,46 +22,30 @@ export default function Home() {
         onQuickAdd={() => setIsQuickAddOpen(true)}
       >
         <div className="flex flex-col gap-6 h-full overflow-y-auto custom-scrollbar pb-24 pr-2">
-          <header className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-            <div>
-              <h1 className="text-3xl font-black tracking-tighter text-transparent bg-clip-text bg-gradient-to-r from-white to-gray-500">
-                PRO JOURNAL
-              </h1>
-              <p className="text-xs font-semibold text-gray-500 tracking-widest mt-1 uppercase">
-                Vanguardista Edition
-              </p>
-            </div>
-            <div className="flex items-center gap-4">
-              <DatabaseSwitcher variant="header" />
-              
-              <div className="flex items-center gap-2 bg-gunmetal-900 border border-gunmetal-700 px-3 py-1.5 rounded-full">
-                <div className="w-2 h-2 rounded-full bg-target animate-pulse shadow-[0_0_8px_#00C805]" />
-                <span className="text-[10px] font-bold text-gray-300 tracking-wider">SYSTEM ONLINE</span>
-              </div>
-            </div>
-          </header>
+          
+          {/* Header */}
+          <TradezellaHeader />
 
-          <StatsOverview />
+          {/* Metric Stats Cards */}
+          <TradezellaStats />
 
-          <div className="grid grid-cols-1 xl:grid-cols-3 gap-6">
-            <div className="xl:col-span-2 min-h-[650px]">
-              <TradingCalendar />
-            </div>
-            <div className="min-h-[400px]">
-              <WinLossDistributionChart />
-            </div>
+          {/* Row 2: Zella Score, Progress Tracker, Cumulative PnL */}
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+            <ZellaScoreCard />
+            <ProgressTrackerCard />
+            <DailyCumulativePnLCard />
           </div>
 
-          <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-            <div className="lg:col-span-3">
-              <MonthlyReturnMatrix />
-            </div>
+          {/* Row 3: Daily Return Bar, Recent Trades, Account Balance */}
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+            <NetDailyPnLCard />
+            <RecentTradesCard />
+            <AccountBalanceCard />
           </div>
 
-          <div className="grid grid-cols-1 xl:grid-cols-2 gap-6 flex-1 min-h-[400px]">
-            <EquityCurve />
-            <PsychologyHeatmap />
-          </div>
+          {/* Row 4: Calendar Section with Stats, Drawdown, Scatter Time */}
+          <TradezellaCalendarSection />
+
         </div>
       </DashboardLayout>
 
